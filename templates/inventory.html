@@ -50,7 +50,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Item Name</th>
-                                            <th>Stock Quantity</th>
+                                            <th>Quantity</th>
                                             <th>Purchase Price (KES)</th>
                                             <th>Total Value (KES)</th>
                                             <th>Actions</th>
@@ -61,15 +61,15 @@
                                         <tr>
                                             <td>{{ item.item_id }}</td>
                                             <td>{{ item.item_name }}</td>
-                                            <td>{{ item.stock_qty or 0 }}</td>
-                                            <td>{{ "{:,.2f}".format(item.auto_purchase_price or 0) }}</td>
-                                            <td>{{ "{:,.2f}".format((item.stock_qty or 0) * (item.auto_purchase_price or 0)) }}</td>
+                                            <td>{{ item.quantity or 0 }}</td>
+                                            <td>{{ "{:,.2f}".format(item.purchase_price or 0) }}</td>
+                                            <td>{{ "{:,.2f}".format((item.quantity or 0) * (item.purchase_price or 0)) }}</td>
                                             <td>
                                                 <button class="btn btn-sm btn-warning edit-item" 
                                                         data-id="{{ item.item_id }}"
                                                         data-name="{{ item.item_name }}"
-                                                        data-qty="{{ item.stock_qty }}"
-                                                        data-price="{{ item.auto_purchase_price }}">Edit</button>
+                                                        data-qty="{{ item.quantity }}"
+                                                        data-price="{{ item.purchase_price }}">Edit</button>
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -92,7 +92,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Product Name</th>
-                                            <th>Stock Quantity</th>
+                                            <th>Quantity</th>
                                             <th>Purchase Price (KES)</th>
                                             <th>Total Value (KES)</th>
                                             <th>Actions</th>
@@ -102,16 +102,16 @@
                                         {% for product in products %}
                                         <tr>
                                             <td>{{ product.product_id }}</td>
-                                            <td>{{ product.name }}</td>
-                                            <td>{{ product.stock_qty or 0 }}</td>
-                                            <td>{{ "{:,.2f}".format(product.auto_purchase_price or 0) }}</td>
-                                            <td>{{ "{:,.2f}".format((product.stock_qty or 0) * (product.auto_purchase_price or 0)) }}</td>
+                                            <td>{{ product.product_name }}</td>
+                                            <td>{{ product.quantity or 0 }}</td>
+                                            <td>{{ "{:,.2f}".format(product.purchase_price or 0) }}</td>
+                                            <td>{{ "{:,.2f}".format((product.quantity or 0) * (product.purchase_price or 0)) }}</td>
                                             <td>
                                                 <button class="btn btn-sm btn-warning edit-product" 
                                                         data-id="{{ product.product_id }}"
-                                                        data-name="{{ product.name }}"
-                                                        data-qty="{{ product.stock_qty }}"
-                                                        data-price="{{ product.auto_purchase_price }}">Edit</button>
+                                                        data-name="{{ product.product_name }}"
+                                                        data-qty="{{ product.quantity }}"
+                                                        data-price="{{ product.purchase_price }}">Edit</button>
                                             </td>
                                         </tr>
                                         {% endfor %}
@@ -140,12 +140,12 @@
                             <input type="text" name="item_name" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Stock Quantity</label>
-                            <input type="number" name="stock_qty" class="form-control" value="0">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" name="quantity" class="form-control" value="0">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Purchase Price (KES)</label>
-                            <input type="number" step="0.01" name="auto_purchase_price" class="form-control" value="0">
+                            <input type="number" step="0.01" name="purchase_price" class="form-control" value="0">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -169,15 +169,15 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Product Name</label>
-                            <input type="text" name="name" class="form-control" required>
+                            <input type="text" name="product_name" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Stock Quantity</label>
-                            <input type="number" name="stock_qty" class="form-control" value="0">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" name="quantity" class="form-control" value="0">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Purchase Price (KES)</label>
-                            <input type="number" step="0.01" name="auto_purchase_price" class="form-control" value="0">
+                            <input type="number" step="0.01" name="purchase_price" class="form-control" value="0">
                         </div>
                     </div>
                     <div class="modal-footer">

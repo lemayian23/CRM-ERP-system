@@ -446,9 +446,9 @@ def add_item():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO tbl_item (item_name, stock_qty, auto_purchase_price)
+        INSERT INTO tbl_item (item_name, quantity, purchase_price)
         VALUES (%s, %s, %s)
-    """, (request.form['item_name'], request.form['stock_qty'], request.form['auto_purchase_price']))
+    """, (request.form['item_name'], request.form['quantity'], request.form['purchase_price']))
     conn.commit()
     cursor.close()
     conn.close()
@@ -465,7 +465,7 @@ def add_product():
     cursor.execute("""
         INSERT INTO tbl_product (product_name, quantity, purchase_price)
         VALUES (%s, %s, %s)
-    """, (request.form['name'], request.form['stock_qty'], request.form['auto_purchase_price']))
+    """, (request.form['product_name'], request.form['quantity'], request.form['purchase_price']))
     conn.commit()
     cursor.close()
     conn.close()
