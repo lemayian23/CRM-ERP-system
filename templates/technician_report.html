@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aquashine - Technician Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary px-4">
+        <span class="navbar-brand">Aquashine CRM</span>
+        <span class="text-white">Welcome, {{ username }} ({{ role }})</span>
+        <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+    </nav>
+    
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="list-group">
+                    <a href="/dashboard" class="list-group-item list-group-item-action">Dashboard</a>
+                    <a href="/job-cards" class="list-group-item list-group-item-action">Job Cards</a>
+                    <a href="/customers" class="list-group-item list-group-item-action">Customers</a>
+                    <a href="/inventory" class="list-group-item list-group-item-action">Inventory</a>
+                    <a href="/technicians" class="list-group-item list-group-item-action">Technicians</a>
+                    <a href="/reports" class="list-group-item list-group-item-action">Reports</a>
+                    <a href="/reports/technicians" class="list-group-item list-group-item-action active">Technician Report</a>
+                </div>
+            </div>
+            
+            <div class="col-md-10">
+                <h5>Technician Performance Report</h5>
+                
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped" id="techniciansTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Technician Name</th>
+                                    <th>Status</th>
+                                    <th>Total Jobs</th>
+                                    <th>Completed Jobs</th>
+                                    <th>Revenue Generated (KES)</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tech in technicians %}
+                                <tr>
+                                    <td>{{ tech.tech_id }}</td>
+                                    <td>{{ tech.tech_name }}</td>
+                                    <td>
+                                        {% if tech.status == 'active' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ tech.total_jobs or 0 }}</td>
+                                    <td>{{ tech.completed_jobs or 0 }}</td>
+                                    <td>{{ "{:,.2f}".format(tech.revenue or 0) }}</td>
+                                    <td>{{ tech.phone or '-' }}</td>
+                                    <td>{{ tech.email or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#techniciansTable').DataTable();
+        });
+    </script>
+</body>
+</html>

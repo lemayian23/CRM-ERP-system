@@ -668,6 +668,192 @@ def financial_report():
                          payments=payments,
                          summary=summary)
 
+                         
+@app.route('/reports/job-cards')
+def job_card_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT * FROM tbl_service_jc 
+        ORDER BY created_at DESC
+    """)
+    job_cards = cursor.fetchall()
+    
+    # Summary statistics
+    cursor.execute("""
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN jc_closed = 'Closed' THEN 1 ELSE 0 END) as closed,
+            SUM(CASE WHEN jc_closed IS NULL OR jc_closed != 'Closed' THEN 1 ELSE 0 END) as open,
+            SUM(CASE WHEN paid = 'Paid' THEN 1 ELSE 0 END) as paid,
+            SUM(CASE WHEN paid != 'Paid' THEN 1 ELSE 0 END) as unpaid
+        FROM tbl_service_jc
+    """)
+    summary = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('job_card_report.html',
+                         username=session['username'],
+                         role=session['user'],
+                         job_cards=job_cards,
+                         summary=summary)
+
+@app.route('/reports/stock')
+def stock_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT * FROM tbl_item ORDER BY item_name")
+    items = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM tbl_product ORDER BY product_name")
+    products = cursor.fetchall()
+    
+    # Calculate total stock value
+    cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_item")
+    items_total = cursor.fetchone()
+    cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_product")
+    products_total = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('stock_report.html',
+                         username=session['username'],
+                         role=session['user'],
+                         items=items,
+                         products=products,
+                         items_total=items_total['total'],
+                         products_total=products_total['total'])
+
+@app.route('/reports/customers')
+def customer_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT c.*, 
+               COUNT(jc.id) as total_jobs,
+               SUM(CASE WHEN jc.paid = 'Paid' THEN jc.amount ELSE 0 END) as total_spent
+        FROM tbl_customer c
+        LEFT JOIN tbl_service_jc jc ON c.customer_name = jc.customer_name
+        GROUP BY c.customer_id
+        ORDER BY c.customer_name
+    """)
+    customers = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('customer_report.html',
+                         username=session['username'],
+                         role=session['user'],
+                         customers=customers)
+
+@app.route('/reports/technicians')
+def technician_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("""
+        SELECT t.*, 
+               COUNT(jc.id) as total_jobs,
+               SUM(CASE WHEN jc.paid = 'Paid' THEN jc.amount ELSE 0 END) as revenue,
+               SUM(CASE WHEN jc.jc_closed = 'Closed' THEN 1 ELSE 0 END) as completed_jobs
+        FROM tbl_technician t
+        LEFT JOIN tbl_service_jc jc ON t.tech_name = jc.jc_assigned_to
+        GROUP BY t.tech_id
+        ORDER BY t.tech_name
+    """)
+    technicians = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('technician_report.html',
+                         username=session['username'],
+                         role=session['user'],
+                         technicians=technicians)
+
+
+# ============ MPESA NUMBER MANAGEMENT ============
+
+@app.route('/mpesa')
+def mpesa_numbers():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_mpesa_number ORDER BY id DESC")
+    mpesa_numbers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return render_template('mpesa.html',
+                         username=session['username'],
+                         role=session['user'],
+                         mpesa_numbers=mpesa_numbers)
+
+@app.route('/mpesa/add', methods=['POST'])
+def add_mpesa():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO tbl_mpesa_number (name, number) VALUES (%s, %s)",
+                   (request.form['name'], request.form['number']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('mpesa_numbers'))
+
+@app.route('/mpesa/edit', methods=['POST'])
+def edit_mpesa():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tbl_mpesa_number SET name = %s, number = %s WHERE id = %s",
+                   (request.form['name'], request.form['number'], request.form['id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('mpesa_numbers'))
+
+@app.route('/mpesa/delete/<int:mpesa_id>')
+def delete_mpesa(mpesa_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_mpesa_number WHERE id = %s", (mpesa_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('mpesa_numbers'))                       
+
 @app.route('/logout')
 def logout():
     session.clear()
