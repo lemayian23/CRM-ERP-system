@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aquashine - Financial Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary px-4">
+        <span class="navbar-brand">Aquashine CRM</span>
+        <span class="text-white">Welcome, {{ username }} ({{ role }})</span>
+        <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+    </nav>
+    
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="list-group">
+                    <a href="/dashboard" class="list-group-item list-group-item-action">Dashboard</a>
+                    <a href="/job-cards" class="list-group-item list-group-item-action">Job Cards</a>
+                    <a href="/customers" class="list-group-item list-group-item-action">Customers</a>
+                    <a href="/inventory" class="list-group-item list-group-item-action">Inventory</a>
+                    <a href="/technicians" class="list-group-item list-group-item-action">Technicians</a>
+                    <a href="/reports" class="list-group-item list-group-item-action">Reports</a>
+                    <a href="/reports/financial" class="list-group-item list-group-item-action active">Financial</a>
+                </div>
+            </div>
+            
+            <div class="col-md-10">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>Financial Report</h5>
+                    <div class="btn-group">
+                        <a href="/reports/financial?period=week" class="btn btn-sm btn-outline-primary">Week</a>
+                        <a href="/reports/financial?period=month" class="btn btn-sm btn-outline-primary">Month</a>
+                        <a href="/reports/financial?period=year" class="btn btn-sm btn-outline-primary">Year</a>
+                        <a href="/reports/financial?period=all" class="btn btn-sm btn-outline-primary">All</a>
+                    </div>
+                </div>
+                
+                <!-- Summary Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h6>Total Revenue</h6>
+                                <h3>KES {{ "{:,.2f}".format(summary.total_revenue) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h6>Pending Payments</h6>
+                                <h3>KES {{ "{:,.2f}".format(summary.pending_amount) }}</h3>
+                                <small>{{ summary.pending_count }} job cards</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h6>Paid Job Cards</h6>
+                                <h3>{{ summary.paid_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-secondary text-white">
+                            <div class="card-body">
+                                <h6>Total Job Cards</h6>
+                                <h3>{{ summary.total_jobs }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Details Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Payment Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped" id="paymentsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>JC Number</th>
+                                    <th>Customer</th>
+                                    <th>Amount (KES)</th>
+                                    <th>Payment Type</th>
+                                    <th>Payment Code</th>
+                                    <th>Payment Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>{{ payment.id }}</td>
+                                    <td>{{ payment.jc_number or 'N/A' }}</td>
+                                    <td>{{ payment.customer_name }}</td>
+                                    <td>{{ "{:,.2f}".format(payment.total_paid_amount or payment.amount or 0) }}</td>
+                                    <td>{{ payment.payment_type or '-' }}</td>
+                                    <td>{{ payment.payment_code or '-' }}</td>
+                                    <td>{{ payment.payment_date or payment.created_at.strftime('%Y-%m-%d') if payment.created_at else '-' }}</td>
+                                    <td>
+                                        {% if payment.paid == 'Paid' %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#paymentsTable').DataTable({
+                order: [[6, 'desc']]
+            });
+        });
+    </script>
+</body>
+</html>

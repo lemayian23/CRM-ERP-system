@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aquashine - Reports</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary px-4">
+        <span class="navbar-brand">Aquashine CRM</span>
+        <span class="text-white">Welcome, {{ username }} ({{ role }})</span>
+        <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+    </nav>
+    
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="list-group">
+                    <a href="/dashboard" class="list-group-item list-group-item-action">Dashboard</a>
+                    <a href="/job-cards" class="list-group-item list-group-item-action">Job Cards</a>
+                    <a href="/customers" class="list-group-item list-group-item-action">Customers</a>
+                    <a href="/inventory" class="list-group-item list-group-item-action">Inventory</a>
+                    <a href="/technicians" class="list-group-item list-group-item-action">Technicians</a>
+                    <a href="/reports" class="list-group-item list-group-item-action active">Reports</a>
+                </div>
+            </div>
+            
+            <div class="col-md-10">
+                <h5>Reports Dashboard</h5>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <h5 class="card-title">Financial Reports</h5>
+                                <p class="card-text">View payment summaries, pending payments, and revenue reports</p>
+                                <a href="/reports/financial" class="btn btn-light btn-sm">View Report</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h5 class="card-title">Job Card Reports</h5>
+                                <p class="card-text">Job card summaries, technician performance, status reports</p>
+                                <a href="/reports/job-cards" class="btn btn-light btn-sm">View Report</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body">
+                                <h5 class="card-title">Stock Reports</h5>
+                                <p class="card-text">Current stock levels, low stock alerts, inventory valuation</p>
+                                <a href="/reports/stock" class="btn btn-light btn-sm">View Report</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-2">
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <h5 class="card-title">Customer Reports</h5>
+                                <p class="card-text">Customer activity, service history, frequency analysis</p>
+                                <a href="/reports/customers" class="btn btn-light btn-sm">View Report</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card text-white bg-secondary">
+                            <div class="card-body">
+                                <h5 class="card-title">Technician Reports</h5>
+                                <p class="card-text">Technician workload, completed jobs, performance metrics</p>
+                                <a href="/reports/technicians" class="btn btn-light btn-sm">View Report</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -9,6 +9,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
+
 def get_dashboard_metrics():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -394,7 +395,7 @@ def edit_customer():
     cursor.execute("""
         UPDATE tbl_customer 
         SET customer_name = %s, customer_type = %s, email = %s, phone = %s
-        WHERE id = %s
+        WHERE customer_id = %s
     """, (request.form['customer_name'], request.form['customer_type'], 
           request.form['email'], request.form['phone'], request.form['customer_id']))
     conn.commit()
@@ -472,6 +473,72 @@ def add_product():
     
     return redirect(url_for('inventory'))
 
+@app.route('/inventory/item/edit', methods=['POST'])
+def edit_item():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE tbl_item 
+        SET item_name = %s, quantity = %s, purchase_price = %s
+        WHERE item_id = %s
+    """, (request.form['item_name'], request.form['quantity'], 
+          request.form['purchase_price'], request.form['item_id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('inventory'))
+
+@app.route('/inventory/product/edit', methods=['POST'])
+def edit_product():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE tbl_product 
+        SET product_name = %s, quantity = %s, purchase_price = %s
+        WHERE product_id = %s
+    """, (request.form['product_name'], request.form['quantity'], 
+          request.form['purchase_price'], request.form['product_id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('inventory'))
+
+@app.route('/inventory/item/delete/<int:item_id>')
+def delete_item(item_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_item WHERE item_id = %s", (item_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('inventory'))
+
+@app.route('/inventory/product/delete/<int:product_id>')
+def delete_product(product_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_product WHERE product_id = %s", (product_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('inventory'))   
+
 
 @app.route('/technicians')
 def technicians():
@@ -540,6 +607,66 @@ def delete_technician(tech_id):
     conn.close()
     
     return redirect(url_for('technicians'))
+
+
+# ============ REPORTS MODULE ============
+
+@app.route('/reports')
+def reports():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('reports.html', 
+                         username=session['username'], 
+                         role=session['user'])
+
+@app.route('/reports/financial')
+def financial_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    period = request.args.get('period', 'all')
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Date filter logic
+    date_filter = ""
+    if period == 'week':
+        date_filter = "AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
+    elif period == 'month':
+        date_filter = "AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
+    elif period == 'year':
+        date_filter = "AND created_at >= DATE_SUB(NOW(), INTERVAL 365 DAY)"
+    
+    # Get all payments with date filter
+    cursor.execute(f"""
+        SELECT * FROM tbl_service_jc 
+        WHERE 1=1 {date_filter}
+        ORDER BY created_at DESC
+    """)
+    payments = cursor.fetchall()
+    
+    # Calculate summary
+    cursor.execute(f"""
+        SELECT 
+            COALESCE(SUM(CASE WHEN paid = 'Paid' THEN total_paid_amount ELSE amount END), 0) as total_revenue,
+            COALESCE(SUM(CASE WHEN paid != 'Paid' AND jc_closed = 'Closed' THEN amount ELSE 0 END), 0) as pending_amount,
+            COUNT(CASE WHEN paid = 'Paid' THEN 1 END) as paid_count,
+            COUNT(*) as total_jobs,
+            COUNT(CASE WHEN paid != 'Paid' AND jc_closed = 'Closed' THEN 1 END) as pending_count
+        FROM tbl_service_jc
+        WHERE 1=1 {date_filter}
+    """)
+    summary = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('financial_report.html',
+                         username=session['username'],
+                         role=session['user'],
+                         payments=payments,
+                         summary=summary)
 
 @app.route('/logout')
 def logout():
