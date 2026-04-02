@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aquashine - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .metric-card { transition: transform 0.2s; cursor: pointer; }
+        .metric-card:hover { transform: translateY(-5px); }
+        .stat-number { font-size: 2rem; font-weight: bold; }
+        .alert-critical { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary px-4">
+        <span class="navbar-brand">Aquashine CRM</span>
+        <span class="text-white">Welcome, {{ username }} ({{ role }})</span>
+        <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+    </nav>
+    
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action active">Dashboard</a>
+                    <a href="#" class="list-group-item list-group-item-action">Job Cards</a>
+                    <a href="#" class="list-group-item list-group-item-action">Customers</a>
+                    <a href="#" class="list-group-item list-group-item-action">Inventory</a>
+                    <a href="#" class="list-group-item list-group-item-action">Reports</a>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10">
+                <h5>Dashboard Overview</h5>
+                
+                <!-- Job Card Metrics -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h6>Job Cards</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card metric-card bg-info text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Unassigned JC</h6>
+                                <p class="stat-number">{{ metrics.unassigned_jc }}</p>
+                                <small>Awaiting technician assignment</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card metric-card bg-warning text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Running JC</h6>
+                                <p class="stat-number">{{ metrics.running_jc }}</p>
+                                <small>Active, unclosed & unpaid</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card metric-card {% if metrics.past_planned_jc > 0 %}alert-critical{% else %}bg-danger{% endif %} text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Past Planned JC</h6>
+                                <p class="stat-number">{{ metrics.past_planned_jc }}</p>
+                                <small>⚠️ Overdue job cards</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financial Metrics -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h6>Financial</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card metric-card bg-success text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Pending Payments</h6>
+                                <p class="stat-number">{{ metrics.pending_payment_count }}</p>
+                                <small>Closed but unpaid job cards</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card metric-card bg-secondary text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Outstanding Balance</h6>
+                                <p class="stat-number">KES {{ "%.2f"|format(metrics.pending_payment_total) }}</p>
+                                <small>Total amount due</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Customer Metrics -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h6>Customers</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card metric-card bg-primary text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Individual</h6>
+                                <p class="stat-number">{{ metrics.customers.get('Individual', 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card metric-card bg-primary text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Company</h6>
+                                <p class="stat-number">{{ metrics.customers.get('Company', 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card metric-card bg-primary text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Reseller</h6>
+                                <p class="stat-number">{{ metrics.customers.get('Reseller', 0) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Inventory Metrics -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <h6>Inventory & Stock Valuation</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card bg-dark text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Business Units</h6>
+                                <p class="stat-number">{{ metrics.business_units }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card bg-dark text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Brands</h6>
+                                <p class="stat-number">{{ metrics.brands }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card bg-dark text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Categories</h6>
+                                <p class="stat-number">{{ metrics.categories }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card metric-card bg-info text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Running Projects</h6>
+                                <p class="stat-number">{{ metrics.running_projects }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stock Value -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card metric-card bg-secondary text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Items Stock Value</h6>
+                                <p class="stat-number">KES {{ "%.2f"|format(metrics.items_value) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card metric-card bg-secondary text-white">
+                            <div class="card-body">
+                                <h6 class="card-title">Products Stock Value</h6>
+                                <p class="stat-number">KES {{ "%.2f"|format(metrics.products_value) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
