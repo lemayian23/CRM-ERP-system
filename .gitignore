@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Flask
+instance/
+.webassets-cache
+.env
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.pydevproject
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.backup
+
+# PDF temp files
+*.pdf
+!templates/*.pdf
+
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Secrets
+.env
+config/.env
+.secret
+*.key
+*.pem
+
+# Uploads (if any)
+uploads/
+media/
+
+# Reports generated
+reports/
+exports/
