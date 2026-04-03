@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}View Quotation{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-file-invoice-dollar me-2"></i>Quotation Details</h4>
+        <p class="text-muted mb-0">{{ quote.quote_number }}</p>
+    </div>
+    <div>
+        <a href="/pdf/quotation/{{ quote.quote_id }}" class="btn btn-secondary">
+            <i class="fas fa-file-pdf"></i> PDF
+        </a>
+        <a href="/quotations/edit/{{ quote.quote_id }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        {% if quote.status == 'approved' and quote.converted_jc_id is none %}
+        <a href="/quotations/convert/{{ quote.quote_id }}" class="btn btn-success">
+            <i class="fas fa-exchange-alt"></i> Convert to Job Card
+        </a>
+        {% endif %}
+        <a href="/quotations" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Customer Information</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Name:</strong> {{ quote.customer_name }}</p>
+                <p><strong>Email:</strong> {{ quote.customer_email or '-' }}</p>
+                <p><strong>Phone:</strong> {{ quote.customer_phone or '-' }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">Quote Information</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Quote Date:</strong> {{ quote.quote_date or '-' }}</p>
+                <p><strong>Expiry Date:</strong> {{ quote.expiry_date or '-' }}</p>
+                <p><strong>Status:</strong> 
+                    {% if quote.status == 'draft' %}<span class="badge bg-secondary">Draft</span>
+                    {% elif quote.status == 'sent' %}<span class="badge bg-info">Sent</span>
+                    {% elif quote.status == 'approved' %}<span class="badge bg-success">Approved</span>
+                    {% elif quote.status == 'rejected' %}<span class="badge bg-danger">Rejected</span>
+                    {% elif quote.status == 'converted' %}<span class="badge bg-primary">Converted</span>{% endif %}
+                </p>
+                {% if quote.converted_jc_id %}
+                <p><strong>Converted to JC:</strong> <a href="/job-cards/{{ quote.converted_jc_id }}">JC #{{ quote.converted_jc_id }}</a></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0">Items & Products</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Item/Product</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Price (KES)</th>
+                        <th class="text-end">Total (KES)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.item_name }}</td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(item.unit_price or 0) }}</td>
+                        <td class="text-end">{{ "{:,.2f}".format(item.total_price or 0) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr><td colspan="3" class="text-end"><strong>Cost Price:</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.cost_price or 0) }}</td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>Subtotal:</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.subtotal or 0) }}</td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>Tax ({{ quote.tax_rate or 0 }}%):</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.tax_amount or 0) }}</td></tr>
+                    <tr><td colspan="3" class="text-end"><strong>Discount:</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.discount_amount or 0) }}</td></tr>
+                    <tr class="table-primary"><td colspan="3" class="text-end"><strong>Total:</strong></td><td class="text-end"><strong>{{ "{:,.2f}".format(quote.total_amount or 0) }}</strong></td></tr>
+                    <tr class="table-success"><td colspan="3" class="text-end"><strong>Gross Profit:</strong></td><td class="text-end"><strong>{{ "{:,.2f}".format(quote.gross_profit or 0) }}</strong></td></tr>
+                    <tr class="table-info"><td colspan="3" class="text-end"><strong>Margin:</strong></td><td class="text-end"><strong>{{ "{:.2f}".format(quote.margin_percentage or 0) }}%</strong></td></tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">Notes</h6>
+            </div>
+            <div class="card-body">
+                <p>{{ quote.notes or 'No notes' }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">Terms & Conditions</h6>
+            </div>
+            <div class="card-body">
+                <p>{{ quote.terms_conditions or 'No terms' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Update Form -->
+<div class="card mt-3">
+    <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0">Update Status</h6>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/quotations/update-status/{{ quote.quote_id }}" class="row g-2">
+            <div class="col-auto">
+                <select name="status" class="form-select">
+                    <option value="draft" {% if quote.status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="sent" {% if quote.status == 'sent' %}selected{% endif %}>Sent</option>
+                    <option value="approved" {% if quote.status == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="rejected" {% if quote.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Update Status</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

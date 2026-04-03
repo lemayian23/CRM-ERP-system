@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Rates Management{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-dollar-sign me-2"></i>Rates Management</h4>
+        <p class="text-muted mb-0">Manage hourly rates, fixed fees, and service charges</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRateModal">
+        <i class="fas fa-plus me-1"></i>New Rate
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="ratesTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Rate Name</th>
+                        <th>Type</th>
+                        <th>Amount (KES)</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rate in rates %}
+                    <tr>
+                        <td>{{ rate.rate_id }}</td>
+                        <td>{{ rate.rate_name }}</td>
+                        <td>
+                            {% if rate.rate_type == 'hourly' %}
+                                <span class="badge bg-info">Hourly</span>
+                            {% elif rate.rate_type == 'fixed' %}
+                                <span class="badge bg-success">Fixed</span>
+                            {% elif rate.rate_type == 'distance' %}
+                                <span class="badge bg-warning">Distance</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Material</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ "{:,.2f}".format(rate.amount or 0) }}</td>
+                        <td>{{ rate.description or '-' }}</td>
+                        <td>
+                            {% if rate.status == 'active' %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-warning edit-rate" 
+                                    data-id="{{ rate.rate_id }}"
+                                    data-name="{{ rate.rate_name }}"
+                                    data-type="{{ rate.rate_type }}"
+                                    data-amount="{{ rate.amount }}"
+                                    data-description="{{ rate.description }}"
+                                    data-status="{{ rate.status }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-rate" data-id="{{ rate.rate_id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Rate Modal -->
+<div class="modal fade" id="addRateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Rate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/rates/add">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Rate Name <span class="text-danger">*</span></label>
+                        <input type="text" name="rate_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rate Type</label>
+                        <select name="rate_type" class="form-control">
+                            <option value="hourly">Hourly</option>
+                            <option value="fixed">Fixed</option>
+                            <option value="distance">Distance (per KM)</option>
+                            <option value="material">Material Markup</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount (KES)</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" value="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-control">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Rate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Rate Modal -->
+<div class="modal fade" id="editRateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Rate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/rates/edit">
+                <div class="modal-body">
+                    <input type="hidden" name="rate_id" id="edit_rate_id">
+                    <div class="mb-3">
+                        <label class="form-label">Rate Name</label>
+                        <input type="text" name="rate_name" id="edit_rate_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rate Type</label>
+                        <select name="rate_type" id="edit_rate_type" class="form-control">
+                            <option value="hourly">Hourly</option>
+                            <option value="fixed">Fixed</option>
+                            <option value="distance">Distance (per KM)</option>
+                            <option value="material">Material Markup</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount (KES)</label>
+                        <input type="number" step="0.01" name="amount" id="edit_amount" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" id="edit_description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" id="edit_status" class="form-control">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Rate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#ratesTable').DataTable();
+        
+        $('.edit-rate').click(function() {
+            $('#edit_rate_id').val($(this).data('id'));
+            $('#edit_rate_name').val($(this).data('name'));
+            $('#edit_rate_type').val($(this).data('type'));
+            $('#edit_amount').val($(this).data('amount'));
+            $('#edit_description').val($(this).data('description'));
+            $('#edit_status').val($(this).data('status'));
+            $('#editRateModal').modal('show');
+        });
+        
+        $('.delete-rate').click(function() {
+            if(confirm('Are you sure you want to delete this rate?')) {
+                window.location.href = '/rates/delete/' + $(this).data('id');
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

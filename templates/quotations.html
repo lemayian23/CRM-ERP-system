@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Quotations{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-file-invoice-dollar me-2"></i>Quotations</h4>
+        <p class="text-muted mb-0">Manage customer quotes and estimates</p>
+    </div>
+    <a href="/quotations/create" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>New Quotation
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="quotationsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Quote Number</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Expiry Date</th>
+                        <th>Total (KES)</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quote in quotations %}
+                    <tr>
+                        <td>{{ quote.quote_id }}</td>
+                        <td>{{ quote.quote_number }}</td>
+                        <td>{{ quote.customer_name }}</td>
+                        <td>{{ quote.quote_date or '-' }}</td>
+                        <td>{{ quote.expiry_date or '-' }}</td>
+                        <td>{{ "{:,.2f}".format(quote.total_amount or 0) }}</td>
+                        <td>
+                            {% if quote.status == 'draft' %}
+                                <span class="badge bg-secondary">Draft</span>
+                            {% elif quote.status == 'sent' %}
+                                <span class="badge bg-info">Sent</span>
+                            {% elif quote.status == 'approved' %}
+                                <span class="badge bg-success">Approved</span>
+                            {% elif quote.status == 'rejected' %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% elif quote.status == 'converted' %}
+                                <span class="badge bg-primary">Converted to JC</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/quotations/view/{{ quote.quote_id }}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="/quotations/edit/{{ quote.quote_id }}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="/pdf/quotation/{{ quote.quote_id }}" class="btn btn-sm btn-secondary">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            <button class="btn btn-sm btn-danger delete-quote" data-id="{{ quote.quote_id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#quotationsTable').DataTable({
+            order: [[0, 'desc']]
+        });
+        
+        $('.delete-quote').click(function() {
+            if(confirm('Delete this quotation?')) {
+                window.location.href = '/quotations/delete/' + $(this).data('id');
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

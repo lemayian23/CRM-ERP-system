@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Financial Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #0066cc;
+            margin: 0;
+        }
+        .summary {
+            margin-bottom: 20px;
+        }
+        .summary-box {
+            display: inline-block;
+            width: 30%;
+            margin: 5px;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AQUASHINE CRM</h1>
+        <p>Financial Report</p>
+        <p>Generated: {{ date.strftime('%Y-%m-%d %H:%M:%S') if date else '' }}</p>
+    </div>
+
+    <div class="summary">
+        <div class="summary-box">
+            <strong>Total Revenue:</strong><br>
+            KES {{ "{:,.2f}".format(summary.total_revenue or 0) }}
+        </div>
+        <div class="summary-box">
+            <strong>Pending Payments:</strong><br>
+            KES {{ "{:,.2f}".format(summary.pending_amount or 0) }}
+        </div>
+        <div class="summary-box">
+            <strong>Paid Jobs:</strong><br>
+            {{ summary.paid_count or 0 }} / {{ summary.total_jobs or 0 }}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Amount (KES)</th>
+                <th>Payment Type</th>
+                <th>Payment Code</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.id }}</td>
+                <td>{{ payment.customer_name }}</td>
+                <td>{{ "{:,.2f}".format(payment.amount or 0) }}</td>
+                <td>{{ payment.payment_type or '-' }}</td>
+                <td>{{ payment.payment_code or '-' }}</td>
+                <td>
+                    {% if payment.paid == 'Paid' %}Paid{% else %}Pending{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Aquashine CRM System - Financial Summary Report</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Stock Movement{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-exchange-alt me-2"></i>Stock Movement</h4>
+    <p class="text-muted mb-0">Track inventory changes and adjust stock levels</p>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link active" data-bs-toggle="tab" href="#adjustments">Stock Adjustments</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#itemMovements">Item Movements</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-bs-toggle="tab" href="#productMovements">Product Movements</a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Stock Adjustments Tab -->
+    <div class="tab-pane fade show active" id="adjustments">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="fas fa-box me-2"></i>Adjust Item Stock</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/stock-movement/adjust-item">
+                            <div class="mb-3">
+                                <label class="form-label">Select Item</label>
+                                <select name="item_id" class="form-control" required>
+                                    <option value="">-- Select Item --</option>
+                                    {% for item in items %}
+                                    <option value="{{ item.item_id }}">
+                                        {{ item.item_name }} (Current: {{ item.quantity }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">New Quantity</label>
+                                <input type="number" name="new_quantity" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Reason for Adjustment</label>
+                                <textarea name="reason" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Adjust Item</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-cube me-2"></i>Adjust Product Stock</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/stock-movement/adjust-product">
+                            <div class="mb-3">
+                                <label class="form-label">Select Product</label>
+                                <select name="product_id" class="form-control" required>
+                                    <option value="">-- Select Product --</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.product_id }}">
+                                        {{ product.product_name }} (Current: {{ product.quantity }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">New Quantity</label>
+                                <input type="number" name="new_quantity" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Reason for Adjustment</label>
+                                <textarea name="reason" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Adjust Product</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Item Movements Tab -->
+    <div class="tab-pane fade" id="itemMovements">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="itemMovementsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item Name</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                                <th>Previous Qty</th>
+                                <th>New Qty</th>
+                                <th>Reference</th>
+                                <th>Notes</th>
+                                <th>By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movement in item_movements %}
+                            <tr>
+                                <td>{{ movement.created_at.strftime('%Y-%m-%d %H:%M') if movement.created_at else '-' }}</td>
+                                <td>{{ movement.item_name }}</td>
+                                <td>
+                                    {% if movement.movement_type == 'IN' %}
+                                        <span class="badge bg-success">IN</span>
+                                    {% elif movement.movement_type == 'OUT' %}
+                                        <span class="badge bg-danger">OUT</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">ADJUSTMENT</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ movement.quantity }}</td>
+                                <td>{{ movement.previous_quantity }}</td>
+                                <td>{{ movement.new_quantity }}</td>
+                                <td>{{ movement.reference_type or '-' }}</td>
+                                <td>{{ movement.notes or '-' }}</td>
+                                <td>{{ movement.created_by or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Product Movements Tab -->
+    <div class="tab-pane fade" id="productMovements">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="productMovementsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Product Name</th>
+                                <th>Type</th>
+                                <th>Quantity</th>
+                                <th>Previous Qty</th>
+                                <th>New Qty</th>
+                                <th>Reference</th>
+                                <th>Notes</th>
+                                <th>By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movement in product_movements %}
+                            <tr>
+                                <td>{{ movement.created_at.strftime('%Y-%m-%d %H:%M') if movement.created_at else '-' }}</td>
+                                <td>{{ movement.product_name }}</td>
+                                <td>
+                                    {% if movement.movement_type == 'IN' %}
+                                        <span class="badge bg-success">IN</span>
+                                    {% elif movement.movement_type == 'OUT' %}
+                                        <span class="badge bg-danger">OUT</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">ADJUSTMENT</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ movement.quantity }}</td>
+                                <td>{{ movement.previous_quantity }}</td>
+                                <td>{{ movement.new_quantity }}</td>
+                                <td>{{ movement.reference_type or '-' }}</td>
+                                <td>{{ movement.notes or '-' }}</td>
+                                <td>{{ movement.created_by or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#itemMovementsTable, #productMovementsTable').DataTable({
+            order: [[0, 'desc']]
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Receive Material{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-boxes me-2"></i>Receive Material</h4>
+        <p class="text-muted mb-0">Receive stock from purchase order {{ po.po_number }}</p>
+    </div>
+    <a href="/purchase-orders" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Purchase Orders
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="/purchase-orders/receive">
+            <input type="hidden" name="po_id" value="{{ po.po_id }}">
+            <input type="hidden" name="po_number" value="{{ po.po_number }}">
+            <input type="hidden" name="supplier_id" value="{{ po.supplier_id }}">
+            <input type="hidden" name="supplier_name" value="{{ po.supplier_name }}">
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Receive Date</label>
+                    <input type="date" name="receive_date" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>Item Type</th>
+                            <th>Name</th>
+                            <th>Ordered Qty</th>
+                            <th>Unit Price (KES)</th>
+                            <th>Received Qty</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.item_type|capitalize }}</td>
+                            <td>{{ item.item_name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ "{:,.2f}".format(item.unit_price or 0) }}</td>
+                            <td>
+                                <input type="hidden" name="item_id[]" value="{{ item.item_id }}">
+                                <input type="hidden" name="item_type[]" value="{{ item.item_type }}">
+                                <input type="hidden" name="item_name[]" value="{{ item.item_name }}">
+                                <input type="hidden" name="price[]" value="{{ item.unit_price }}">
+                                <input type="number" name="quantity[]" class="form-control qty-input" 
+                                       style="width:100px" value="{{ item.quantity }}" max="{{ item.quantity }}">
+                            </td>
+                            <td class="row-total">{{ "{:,.2f}".format((item.unit_price or 0) * (item.quantity or 0)) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <hr>
+            <div class="text-end">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-1"></i>Receive Stock
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.qty-input').on('keyup change', function() {
+            var qty = $(this).val();
+            var price = $(this).closest('tr').find('input[name="price[]"]').val();
+            var total = qty * price;
+            $(this).closest('tr').find('.row-total').text(total.toFixed(2));
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

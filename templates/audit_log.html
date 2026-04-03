@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Log{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h4><i class="fas fa-history me-2"></i>Audit Log</h4>
+    <p class="text-muted mb-0">Track all user activities in the system</p>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label small">Action</label>
+                <select name="action" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    {% for a in actions %}
+                    <option value="{{ a }}" {% if request.args.get('action') == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Table</label>
+                <select name="table" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    {% for t in tables %}
+                    <option value="{{ t }}" {% if request.args.get('table') == t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Username</label>
+                <input type="text" name="username" class="form-control form-control-sm" value="{{ request.args.get('username', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Date From</label>
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request.args.get('date_from', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Date To</label>
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request.args.get('date_to', '') }}">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Audit Log Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover" id="auditTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Table</th>
+                        <th>Record ID</th>
+                        <th>IP Address</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '-' }}</td>
+                        <td>{{ log.username }}</td>
+                        <td>
+                            {% if log.action == 'CREATE' %}
+                                <span class="badge bg-success">CREATE</span>
+                            {% elif log.action == 'UPDATE' %}
+                                <span class="badge bg-warning text-dark">UPDATE</span>
+                            {% elif log.action == 'DELETE' %}
+                                <span class="badge bg-danger">DELETE</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ log.action }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.table_name }}</td>
+                        <td class="text-center">{{ log.record_id or '-' }}</td>
+                        <td>{{ log.ip_address or '-' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info view-details" 
+                                    data-old="{{ log.old_values }}"
+                                    data-new="{{ log.new_values }}"
+                                    title="View Details">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Old Values:</label>
+                    <pre id="oldValues" class="bg-light p-2 rounded" style="font-size: 12px;"></pre>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">New Values:</label>
+                    <pre id="newValues" class="bg-light p-2 rounded" style="font-size: 12px;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-sm td, .table-sm th { padding: 0.5rem; vertical-align: middle; }
+    pre { white-space: pre-wrap; word-wrap: break-word; }
+</style>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#auditTable').DataTable({
+            order: [[0, 'desc']],
+            pageLength: 25,
+            language: {
+                search: "Filter:",
+                lengthMenu: "Show _MENU_ entries"
+            }
+        });
+        
+        $('.view-details').click(function() {
+            var oldVal = $(this).data('old');
+            var newVal = $(this).data('new');
+            
+            try {
+                if (oldVal) {
+                    var oldObj = JSON.parse(oldVal);
+                    $('#oldValues').text(JSON.stringify(oldObj, null, 2));
+                } else {
+                    $('#oldValues').text('No previous values');
+                }
+                
+                if (newVal) {
+                    var newObj = JSON.parse(newVal);
+                    $('#newValues').text(JSON.stringify(newObj, null, 2));
+                } else {
+                    $('#newValues').text('No new values');
+                }
+            } catch(e) {
+                $('#oldValues').text(oldVal || 'No previous values');
+                $('#newValues').text(newVal || 'No new values');
+            }
+            
+            $('#detailsModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

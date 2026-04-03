@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Planner{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-calendar-alt me-2"></i>Planner & Schedule</h4>
+        <p class="text-muted mb-0">Manage your schedule and upcoming tasks</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
+        <i class="fas fa-plus me-1"></i>Add Event
+    </button>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-calendar-week me-2"></i>Calendar</h6>
+            </div>
+            <div class="card-body">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Upcoming Events (7 days)</h6>
+            </div>
+            <div class="card-body">
+                {% if upcoming_events %}
+                <div class="list-group">
+                    {% for event in upcoming_events %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ event.event_title }}</strong><br>
+                                <small>{{ event.event_date }} {% if event.event_time %}at {{ event.event_time }}{% endif %}</small><br>
+                                <small class="text-muted">Assigned to: {{ event.assigned_to or 'Unassigned' }}</small>
+                            </div>
+                            <div>
+                                <a href="/planner/complete/{{ event.event_id }}" class="btn btn-sm btn-success" title="Mark Complete">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <button class="btn btn-sm btn-warning edit-event" 
+                                        data-id="{{ event.event_id }}"
+                                        data-title="{{ event.event_title|escape }}"
+                                        data-description="{{ event.event_description|escape }}"
+                                        data-date="{{ event.event_date }}"
+                                        data-time="{{ event.event_time }}"
+                                        data-end-date="{{ event.end_date }}"
+                                        data-type="{{ event.event_type }}"
+                                        data-jc="{{ event.related_jc_id }}"
+                                        data-assigned="{{ event.assigned_to }}"
+                                        data-status="{{ event.status }}"
+                                        data-color="{{ event.color }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No upcoming events</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Pending Job Cards</h6>
+            </div>
+            <div class="card-body">
+                {% if pending_jobs %}
+                <div class="list-group">
+                    {% for job in pending_jobs %}
+                    <a href="/job-cards/{{ job.id }}" class="list-group-item list-group-item-action">
+                        <strong>JC #{{ job.id }}</strong><br>
+                        {{ job.customer_name }}<br>
+                        <small>Proposed: {{ job.proposed_work_date or 'Not set' }}</small><br>
+                        <small class="text-muted">Assigned: {{ job.jc_assigned_to or 'Unassigned' }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No pending job cards</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Event Modal -->
+<div class="modal fade" id="addEventModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/planner/add">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Event Title <span class="text-danger">*</span></label>
+                            <input type="text" name="event_title" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Event Type</label>
+                            <select name="event_type" class="form-control">
+                                <option value="job">Job Card</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="reminder">Reminder</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Event Date</label>
+                            <input type="date" name="event_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Event Time</label>
+                            <input type="time" name="event_time" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="end_date" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Assigned To</label>
+                            <input type="text" name="assigned_to" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Related Job Card ID</label>
+                            <input type="number" name="related_jc_id" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-control">
+                                <option value="scheduled">Scheduled</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="event_description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="color" name="color" class="form-control" style="width:60px" value="#0066cc">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Event Modal -->
+<div class="modal fade" id="editEventModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/planner/edit">
+                <div class="modal-body">
+                    <input type="hidden" name="event_id" id="edit_event_id">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Event Title</label>
+                            <input type="text" name="event_title" id="edit_event_title" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Event Type</label>
+                            <select name="event_type" id="edit_event_type" class="form-control">
+                                <option value="job">Job Card</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="reminder">Reminder</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Event Date</label>
+                            <input type="date" name="event_date" id="edit_event_date" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Event Time</label>
+                            <input type="time" name="event_time" id="edit_event_time" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="end_date" id="edit_end_date" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Assigned To</label>
+                            <input type="text" name="assigned_to" id="edit_assigned_to" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Related Job Card ID</label>
+                            <input type="number" name="related_jc_id" id="edit_related_jc_id" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="edit_status" class="form-control">
+                                <option value="scheduled">Scheduled</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="event_description" id="edit_event_description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="color" name="color" id="edit_color" class="form-control" style="width:60px">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var calendarEl = document.getElementById('calendar');
+        var events = [];
+        {% for event in events %}
+        events.push({
+            title: "{{ event.event_title|escape }}",
+            start: "{{ event.event_date }}",
+            {% if event.event_time %}start: "{{ event.event_date }}T{{ event.event_time }}",{% endif %}
+            {% if event.end_date %}end: "{{ event.end_date }}",{% endif %}
+            color: "{{ event.color or '#0066cc' }}"
+        });
+        {% endfor %}
+        
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: events
+        });
+        calendar.render();
+        
+        $('.edit-event').click(function() {
+            $('#edit_event_id').val($(this).data('id'));
+            $('#edit_event_title').val($(this).data('title'));
+            $('#edit_event_description').val($(this).data('description'));
+            $('#edit_event_date').val($(this).data('date'));
+            $('#edit_event_time').val($(this).data('time'));
+            $('#edit_end_date').val($(this).data('end-date'));
+            $('#edit_event_type').val($(this).data('type'));
+            $('#edit_related_jc_id').val($(this).data('jc'));
+            $('#edit_assigned_to').val($(this).data('assigned'));
+            $('#edit_status').val($(this).data('status'));
+            $('#edit_color').val($(this).data('color'));
+            $('#editEventModal').modal('show');
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

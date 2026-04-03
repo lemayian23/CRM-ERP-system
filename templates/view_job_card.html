@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}View Job Card{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-clipboard-list me-2"></i>Job Card Details</h4>
+        <p class="text-muted mb-0">Job Card #{{ job_card.id }}</p>
+    </div>
+    <a href="/job-cards" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to List
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong>Customer Name:</strong><br>
+                {{ job_card.customer_name }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong>Customer Type:</strong><br>
+                {{ job_card.customer_type or '-' }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong>JC Type:</strong><br>
+                {{ job_card.jc_type or '-' }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong>JC Number:</strong><br>
+                {{ job_card.jc_number or 'N/A' }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong>Amount:</strong><br>
+                KES {{ "{:,.2f}".format(job_card.amount or 0) }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong>Assigned To:</strong><br>
+                {{ job_card.jc_assigned_to or 'Unassigned' }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong>Proposed Work Date:</strong><br>
+                {{ job_card.proposed_work_date or '-' }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong>Work Done Date:</strong><br>
+                {{ job_card.work_done_date or '-' }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <strong>Work Statement:</strong><br>
+                {{ job_card.work_statement or '-' }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <strong>Job Finding:</strong><br>
+                {{ job_card.job_finding or '-' }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong>Status:</strong><br>
+                {% if job_card.jc_closed == 'Closed' %}
+                    <span class="badge bg-success">Closed</span>
+                {% else %}
+                    <span class="badge bg-warning">Open</span>
+                {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong>Payment Status:</strong><br>
+                {% if job_card.paid == 'Paid' %}
+                    <span class="badge bg-success">Paid</span>
+                {% else %}
+                    <span class="badge bg-danger">Pending</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if job_card.paid == 'Paid' %}
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <strong>Payment Type:</strong><br>
+                {{ job_card.payment_type or '-' }}
+            </div>
+            <div class="col-md-6 mb-3">
+                <strong>Payment Code:</strong><br>
+                {{ job_card.payment_code or '-' }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

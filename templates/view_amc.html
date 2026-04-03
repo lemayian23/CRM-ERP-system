@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}AMC Details{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-file-contract me-2"></i>AMC Contract Details</h4>
+        <p class="text-muted mb-0">{{ contract.amc_number }}</p>
+    </div>
+    <a href="/amc" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to AMCs
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Contract Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Customer:</strong><br>
+                        {{ contract.customer_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Status:</strong><br>
+                        {% if contract.status == 'active' %}
+                            <span class="badge bg-success">Active</span>
+                        {% elif contract.status == 'expired' %}
+                            <span class="badge bg-danger">Expired</span>
+                        {% elif contract.status == 'cancelled' %}
+                            <span class="badge bg-secondary">Cancelled</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Contract Period:</strong><br>
+                        {{ contract.contract_start or 'Not set' }} to {{ contract.contract_end or 'Not set' }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Contract Value:</strong><br>
+                        KES {{ "{:,.2f}".format(contract.contract_value or 0) }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Payment Terms:</strong><br>
+                        {{ contract.payment_terms or '-' }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Service Level:</strong><br>
+                        {{ contract.service_level or '-' }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <strong>Notes:</strong><br>
+                        {{ contract.notes or 'No notes' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Add Service Visit</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/amc/add-job/{{ contract.amc_id }}">
+                    <div class="mb-2">
+                        <label class="form-label">Visit Date</label>
+                        <input type="date" name="visit_date" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Technician</label>
+                        <input type="text" name="technician_name" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Work Done</label>
+                        <textarea name="work_done" class="form-control" rows="2" required></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Amount (KES)</label>
+                        <input type="number" step="0.01" name="amount" class="form-control" value="0">
+                    </div>
+                    <input type="hidden" name="customer_name" value="{{ contract.customer_name }}">
+                    <button type="submit" class="btn btn-success w-100">Add Service Visit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Service Visit History</h6>
+    </div>
+    <div class="card-body">
+        {% if amc_jobs %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="jobsTable">
+                <thead>
+                    <tr>
+                        <th>Visit Date</th>
+                        <th>Technician</th>
+                        <th>Work Done</th>
+                        <th>Amount (KES)</th>
+                        <th>Status</th>
+                        <th>JC Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in amc_jobs %}
+                    <tr>
+                        <td>{{ job.visit_date or '-' }}</td>
+                        <td>{{ job.technician_name or '-' }}</td>
+                        <td>{{ job.work_done[:50] }}{% if job.work_done|length > 50 %}...{% endif %}</td>
+                        <td>{{ "{:,.2f}".format(job.amount or 0) }}</td>
+                        <td>
+                            {% if job.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elif job.status == 'scheduled' %}
+                                <span class="badge bg-warning">Scheduled</span>
+                            {% else %}
+                                <span class="badge bg-danger">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if job.jc_number %}
+                            <a href="/job-cards/{{ job.jc_id }}" class="btn btn-sm btn-info">View JC</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>
+            No service visits recorded for this AMC contract yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#jobsTable').DataTable();
+    });
+</script>
+{% endblock %}
+{% endblock %}

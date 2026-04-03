@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Status Report{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-chart-line me-2"></i>Daily Status Report</h4>
+        <p class="text-muted mb-0">Track daily business performance metrics</p>
+    </div>
+    <a href="/daily-status/generate" class="btn btn-sm btn-primary">
+        <i class="fas fa-sync-alt me-1"></i>Refresh Today
+    </a>
+</div>
+
+<!-- Today's Summary - Clean Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Jobs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_report.total_jobs or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">New Jobs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_report.new_jobs or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-plus-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Closed Jobs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_report.closed_jobs or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Paid Jobs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today_report.paid_jobs or 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-credit-card fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Summary Row -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 text-muted"><i class="fas fa-clock me-2"></i>Pending Payments</h6>
+            </div>
+            <div class="card-body text-center">
+                <h2 class="text-danger mb-0">KES {{ "{:,.2f}".format(today_report.pending_payment_amount or 0) }}</h2>
+                <small class="text-muted">Awaiting collection</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 text-muted"><i class="fas fa-chart-line me-2"></i>Total Revenue</h6>
+            </div>
+            <div class="card-body text-center">
+                <h2 class="text-success mb-0">KES {{ "{:,.2f}".format(today_report.total_revenue or 0) }}</h2>
+                <small class="text-muted">Today's earnings</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historical Reports Table -->
+<div class="card shadow">
+    <div class="card-header bg-white">
+        <h6 class="mb-0 text-muted"><i class="fas fa-history me-2"></i>Historical Reports (Last 30 Days)</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover" id="reportsTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Date</th>
+                        <th class="text-center">Total</th>
+                        <th class="text-center">New</th>
+                        <th class="text-center">Closed</th>
+                        <th class="text-center">Paid</th>
+                        <th class="text-end">Pending (KES)</th>
+                        <th class="text-end">Revenue (KES)</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.report_date }}</td>
+                        <td class="text-center">{{ report.total_jobs or 0 }}</td>
+                        <td class="text-center">{{ report.new_jobs or 0 }}</td>
+                        <td class="text-center">{{ report.closed_jobs or 0 }}</td>
+                        <td class="text-center">{{ report.paid_jobs or 0 }}</td>
+                        <td class="text-end">{{ "{:,.0f}".format(report.pending_payment_amount or 0) }}</td>
+                        <td class="text-end">{{ "{:,.0f}".format(report.total_revenue or 0) }}</td>
+                        <td class="text-center">
+                            <a href="/daily-status/view/{{ report.report_date }}" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary { border-left: 4px solid #4e73df !important; }
+    .border-left-success { border-left: 4px solid #1cc88a !important; }
+    .border-left-warning { border-left: 4px solid #f6c23e !important; }
+    .border-left-info { border-left: 4px solid #36b9cc !important; }
+    .text-xs { font-size: 0.7rem; }
+    .text-gray-800 { color: #5a5c69 !important; }
+    .text-gray-300 { color: #dddfeb !important; }
+    .shadow { box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1) !important; }
+    .table-sm th, .table-sm td { padding: 0.5rem; vertical-align: middle; }
+</style>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#reportsTable').DataTable({
+            order: [[0, 'desc']],
+            pageLength: 15,
+            language: {
+                search: "Filter:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries"
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

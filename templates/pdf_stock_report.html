@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0066cc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #0066cc;
+            margin: 0;
+        }
+        .summary {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .summary-box {
+            display: inline-block;
+            width: 40%;
+            margin: 5px;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AQUASHINE CRM</h1>
+        <p>Stock Report</p>
+        <p>Generated: {{ date.strftime('%Y-%m-%d %H:%M:%S') if date else '' }}</p>
+    </div>
+
+    <div class="summary">
+        <div class="summary-box">
+            <strong>Total Items Value:</strong><br>
+            KES {{ "{:,.2f}".format(items_total or 0) }}
+        </div>
+        <div class="summary-box">
+            <strong>Total Products Value:</strong><br>
+            KES {{ "{:,.2f}".format(products_total or 0) }}
+        </div>
+    </div>
+
+    <h3>Items Inventory</h3>
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Item Name</th><th>Quantity</th><th>Unit Price</th><th>Total Value</th></tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.item_id }}</td>
+                <td>{{ item.item_name }}</td>
+                <td>{{ item.quantity or 0 }}</td>
+                <td>KES {{ "{:,.2f}".format(item.purchase_price or 0) }}</td>
+                <td>KES {{ "{:,.2f}".format((item.quantity or 0) * (item.purchase_price or 0)) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Products Inventory</h3>
+    <table>
+        <thead>
+            <tr><th>ID</th><th>Product Name</th><th>Quantity</th><th>Unit Price</th><th>Total Value</th></tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.product_id }}</td>
+                <td>{{ product.product_name }}</td>
+                <td>{{ product.quantity or 0 }}</td>
+                <td>KES {{ "{:,.2f}".format(product.purchase_price or 0) }}</td>
+                <td>KES {{ "{:,.2f}".format((product.quantity or 0) * (product.purchase_price or 0)) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Aquashine CRM System - Stock Valuation Report</p>
+    </div>
+</body>
+</html>
