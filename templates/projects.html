@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Projects{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-project-diagram me-2"></i>Projects</h4>
+        <p class="text-muted mb-0">Manage your business projects</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+        <i class="fas fa-plus me-1"></i>New Project
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="projectsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Project Name</th>
+                        <th>Status</th>
+                        <th>Budget (KES)</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Assigned To</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for project in projects %}
+                    <tr>
+                        <td>{{ project.project_id }}</td>
+                        <td>
+                            <a href="/projects/view/{{ project.project_id }}" class="text-decoration-none">
+                                {{ project.project_name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if project.status == 'planning' %}
+                                <span class="badge bg-secondary">Planning</span>
+                            {% elif project.status == 'running' %}
+                                <span class="badge bg-success">Running</span>
+                            {% elif project.status == 'on_hold' %}
+                                <span class="badge bg-warning">On Hold</span>
+                            {% elif project.status == 'completed' %}
+                                <span class="badge bg-info">Completed</span>
+                            {% elif project.status == 'cancelled' %}
+                                <span class="badge bg-danger">Cancelled</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ project.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ "{:,.2f}".format(project.budget or 0) }}</td>
+                        <td>{{ project.start_date or '-' }}</td>
+                        <td>{{ project.end_date or '-' }}</td>
+                        <td>{{ project.assigned_to or '-' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning edit-project" 
+                                    data-id="{{ project.project_id }}"
+                                    data-name="{{ project.project_name }}"
+                                    data-description="{{ project.project_description }}"
+                                    data-start="{{ project.start_date }}"
+                                    data-end="{{ project.end_date }}"
+                                    data-status="{{ project.status }}"
+                                    data-budget="{{ project.budget }}"
+                                    data-customer="{{ project.customer_id }}"
+                                    data-assigned="{{ project.assigned_to }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-info view-project" data-id="{{ project.project_id }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger delete-project" data-id="{{ project.project_id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="modal fade" id="addProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i>Add New Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/projects/add">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Project Name <span class="text-danger">*</span></label>
+                            <input type="text" name="project_name" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="project_description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="start_date" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="end_date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-control">
+                                <option value="planning">Planning</option>
+                                <option value="running">Running</option>
+                                <option value="on_hold">On Hold</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Budget (KES)</label>
+                            <input type="number" step="0.01" name="budget" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Customer ID</label>
+                            <input type="number" name="customer_id" class="form-control" placeholder="Optional">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Assigned To</label>
+                            <input type="text" name="assigned_to" class="form-control" placeholder="Team/Person">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div class="modal fade" id="editProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Project</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/projects/edit" id="editProjectForm">
+                <div class="modal-body">
+                    <input type="hidden" name="project_id" id="edit_project_id">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Project Name</label>
+                            <input type="text" name="project_name" id="edit_project_name" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="project_description" id="edit_project_description" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="start_date" id="edit_start_date" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="end_date" id="edit_end_date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" id="edit_status" class="form-control">
+                                <option value="planning">Planning</option>
+                                <option value="running">Running</option>
+                                <option value="on_hold">On Hold</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Budget (KES)</label>
+                            <input type="number" step="0.01" name="budget" id="edit_budget" class="form-control">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Customer ID</label>
+                            <input type="number" name="customer_id" id="edit_customer_id" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Assigned To</label>
+                            <input type="text" name="assigned_to" id="edit_assigned_to" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#projectsTable').DataTable({
+            order: [[0, 'desc']]
+        });
+        
+        // Edit Project
+        $('.edit-project').click(function() {
+            $('#edit_project_id').val($(this).data('id'));
+            $('#edit_project_name').val($(this).data('name'));
+            $('#edit_project_description').val($(this).data('description'));
+            $('#edit_start_date').val($(this).data('start'));
+            $('#edit_end_date').val($(this).data('end'));
+            $('#edit_status').val($(this).data('status'));
+            $('#edit_budget').val($(this).data('budget'));
+            $('#edit_customer_id').val($(this).data('customer'));
+            $('#edit_assigned_to').val($(this).data('assigned'));
+            $('#editProjectModal').modal('show');
+        });
+        
+        // View Project
+        $('.view-project').click(function() {
+            window.location.href = '/projects/view/' + $(this).data('id');
+        });
+        
+        // Delete Project
+        $('.delete-project').click(function() {
+            if(confirm('Are you sure you want to delete this project? This may affect associated job cards.')) {
+                window.location.href = '/projects/delete/' + $(this).data('id');
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

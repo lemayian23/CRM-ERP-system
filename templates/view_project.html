@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Project Details{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-project-diagram me-2"></i>Project Details</h4>
+        <p class="text-muted mb-0">View project information and associated job cards</p>
+    </div>
+    <a href="/projects" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Projects
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Project Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Project Name:</strong><br>
+                        {{ project.project_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Status:</strong><br>
+                        {% if project.status == 'planning' %}
+                            <span class="badge bg-secondary">Planning</span>
+                        {% elif project.status == 'running' %}
+                            <span class="badge bg-success">Running</span>
+                        {% elif project.status == 'on_hold' %}
+                            <span class="badge bg-warning">On Hold</span>
+                        {% elif project.status == 'completed' %}
+                            <span class="badge bg-info">Completed</span>
+                        {% elif project.status == 'cancelled' %}
+                            <span class="badge bg-danger">Cancelled</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Start Date:</strong><br>
+                        {{ project.start_date or 'Not set' }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>End Date:</strong><br>
+                        {{ project.end_date or 'Not set' }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Budget:</strong><br>
+                        KES {{ "{:,.2f}".format(project.budget or 0) }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Assigned To:</strong><br>
+                        {{ project.assigned_to or 'Unassigned' }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <strong>Description:</strong><br>
+                        {{ project.project_description or 'No description provided' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Quick Stats</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h5>Associated Job Cards</h5>
+                    <h2 class="text-primary">{{ job_cards|length }}</h2>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <button class="btn btn-sm btn-primary" onclick="window.location.href='/job-cards/create'">
+                        <i class="fas fa-plus me-1"></i>Create Job Card for this Project
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Associated Job Cards</h6>
+    </div>
+    <div class="card-body">
+        {% if job_cards %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped" id="jobCardsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>JC Number</th>
+                        <th>Customer</th>
+                        <th>Amount (KES)</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for jc in job_cards %}
+                    <tr>
+                        <td>{{ jc.id }}</td>
+                        <td>{{ jc.jc_number or 'N/A' }}</td>
+                        <td>{{ jc.customer_name }}</td>
+                        <td>{{ "{:,.2f}".format(jc.amount or 0) }}</td>
+                        <td>
+                            {% if jc.jc_closed == 'Closed' %}
+                                <span class="badge bg-success">Closed</span>
+                            {% else %}
+                                <span class="badge bg-warning">Open</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if jc.paid == 'Paid' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% else %}
+                                <span class="badge bg-danger">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/job-cards/{{ jc.id }}" class="btn btn-sm btn-info">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>
+            No job cards associated with this project yet.
+            <a href="/job-cards/create" class="alert-link">Create one now</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#jobCardsTable').DataTable();
+    });
+</script>
+{% endblock %}
+{% endblock %}

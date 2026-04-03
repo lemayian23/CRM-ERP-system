@@ -1,94 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Aquashine - Create Job Card</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar navbar-dark bg-primary px-4">
-        <span class="navbar-brand">Aquashine CRM</span>
-        <span class="text-white">Welcome, {{ username }} ({{ role }})</span>
-        <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
-    </nav>
-    
-    <div class="container-fluid mt-4">
-        <div class="row">
-            <div class="col-md-2">
-                <div class="list-group">
-                    <a href="/dashboard" class="list-group-item list-group-item-action">Dashboard</a>
-                    <a href="/job-cards" class="list-group-item list-group-item-action active">Job Cards</a>
-                    <a href="#" class="list-group-item list-group-item-action">Customers</a>
-                    <a href="#" class="list-group-item list-group-item-action">Inventory</a>
-                    <a href="#" class="list-group-item list-group-item-action">Technicians</a>
-                    <a href="#" class="list-group-item list-group-item-action">Reports</a>
+{% extends "base.html" %}
+
+{% block title %}Create Job Card{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-plus-circle me-2"></i>Create New Job Card</h4>
+        <p class="text-muted mb-0">Fill in the details to create a new job card</p>
+    </div>
+    <a href="/job-cards" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to List
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="/job-cards/create">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">JC Type <span class="text-danger">*</span></label>
+                    <select name="jc_type" class="form-control" required>
+                        <option value="Service">Service</option>
+                        <option value="Trading">Trading</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Customer Type <span class="text-danger">*</span></label>
+                    <select name="customer_type" class="form-control" required>
+                        <option value="Individual">Individual</option>
+                        <option value="Company">Company</option>
+                        <option value="Reseller">Reseller</option>
+                    </select>
                 </div>
             </div>
             
-            <div class="col-md-10">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5>Create New Job Card</h5>
-                    <a href="/job-cards" class="btn btn-secondary btn-sm">Back</a>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Customer Name <span class="text-danger">*</span></label>
+                    <input type="text" name="customer_name" class="form-control" required>
                 </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <form method="POST" action="/job-cards/create">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">JC Type</label>
-                                    <select name="jc_type" class="form-control" required>
-                                        <option value="Service">Service</option>
-                                        <option value="Trading">Trading</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Customer Type</label>
-                                    <select name="customer_type" class="form-control" required>
-                                        <option value="Individual">Individual</option>
-                                        <option value="Company">Company</option>
-                                        <option value="Reseller">Reseller</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Customer Name</label>
-                                    <input type="text" name="customer_name" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Customer ID</label>
-                                    <input type="number" name="customer_id" class="form-control">
-                                </div>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">JC Create Date</label>
-                                    <input type="date" name="jc_create_date" class="form-control" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Amount (KES)</label>
-                                    <input type="number" step="0.01" name="amount" class="form-control" required>
-                                </div>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-12">
-                                    <label class="form-label">Work Statement</label>
-                                    <textarea name="work_statement" class="form-control" rows="3"></textarea>
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Create Job Card</button>
-                        </form>
-                    </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Customer ID</label>
+                    <input type="number" name="customer_id" class="form-control" placeholder="Optional">
                 </div>
             </div>
-        </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">JC Create Date <span class="text-danger">*</span></label>
+                    <input type="date" name="jc_create_date" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Amount (KES) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" name="amount" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Work Statement</label>
+                <textarea name="work_statement" class="form-control" rows="4" placeholder="Describe the work to be done..."></textarea>
+            </div>
+            
+            <hr>
+            <div class="text-end">
+                <button type="reset" class="btn btn-secondary">Reset</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>Create Job Card
+                </button>
+            </div>
+        </form>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

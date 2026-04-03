@@ -9,7 +9,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
-
 def get_dashboard_metrics():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -28,7 +27,6 @@ def get_dashboard_metrics():
         'products_value': 0
     }
     
-    # Unassigned JC
     try:
         cursor.execute("SELECT COUNT(*) as count FROM tbl_service_jc WHERE jc_assigned_to IS NULL OR jc_assigned_to = ''")
         row = cursor.fetchone()
@@ -37,7 +35,6 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in unassigned_jc: {e}")
     
-    # Running JC
     try:
         cursor.execute("SELECT COUNT(*) as count FROM tbl_service_jc WHERE jc_assigned_to IS NOT NULL AND jc_assigned_to != '' AND (jc_closed IS NULL OR jc_closed != 'Closed') AND (paid IS NULL OR paid != 'Paid')")
         row = cursor.fetchone()
@@ -46,7 +43,6 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in running_jc: {e}")
     
-    # Past Planned JC
     try:
         cursor.execute("SELECT COUNT(*) as count FROM tbl_service_jc WHERE jc_assigned_to IS NOT NULL AND jc_assigned_to != '' AND (jc_closed IS NULL OR jc_closed != 'Closed') AND (paid IS NULL OR paid != 'Paid') AND proposed_work_date < %s", (date.today(),))
         row = cursor.fetchone()
@@ -55,7 +51,6 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in past_planned_jc: {e}")
     
-    # Pending Payment
     try:
         cursor.execute("SELECT COUNT(*) as count, COALESCE(SUM(amount), 0) as total FROM tbl_service_jc WHERE jc_closed = 'Closed' AND (paid IS NULL OR paid != 'Paid')")
         row = cursor.fetchone()
@@ -65,7 +60,6 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in pending_payment: {e}")
     
-    # Customer metrics
     try:
         cursor.execute("SELECT customer_type, COUNT(*) as count FROM tbl_customer GROUP BY customer_type")
         rows = cursor.fetchall()
@@ -75,7 +69,6 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in customers: {e}")
     
-    # Running projects
     try:
         cursor.execute("SELECT COUNT(*) as count FROM tbl_project")
         row = cursor.fetchone()
@@ -84,7 +77,6 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in projects: {e}")
     
-    # Items count
     try:
         cursor.execute("SELECT COUNT(*) as count FROM tbl_item")
         row = cursor.fetchone()
@@ -93,7 +85,6 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in items count: {e}")
     
-    # Products count
     try:
         cursor.execute("SELECT COUNT(*) as count FROM tbl_product")
         row = cursor.fetchone()
@@ -102,24 +93,22 @@ def get_dashboard_metrics():
     except Exception as e:
         print(f"Error in products count: {e}")
     
-    # Items value - check if columns exist
     try:
         cursor.execute("SHOW COLUMNS FROM tbl_item")
         columns = [col['Field'] for col in cursor.fetchall()]
-        if 'stock_qty' in columns and 'auto_purchase_price' in columns:
-            cursor.execute("SELECT COALESCE(SUM(stock_qty * auto_purchase_price), 0) as total FROM tbl_item")
+        if 'quantity' in columns and 'purchase_price' in columns:
+            cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_item")
             row = cursor.fetchone()
             if row:
                 metrics['items_value'] = float(row['total']) if row['total'] else 0
     except Exception as e:
         print(f"Error in items value: {e}")
     
-    # Products value - check if columns exist
     try:
         cursor.execute("SHOW COLUMNS FROM tbl_product")
         columns = [col['Field'] for col in cursor.fetchall()]
-        if 'stock_qty' in columns and 'auto_purchase_price' in columns:
-            cursor.execute("SELECT COALESCE(SUM(stock_qty * auto_purchase_price), 0) as total FROM tbl_product")
+        if 'quantity' in columns and 'purchase_price' in columns:
+            cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_product")
             row = cursor.fetchone()
             if row:
                 metrics['products_value'] = float(row['total']) if row['total'] else 0
@@ -170,7 +159,8 @@ def dashboard():
     return render_template('dashboard.html', 
                          username=session['username'], 
                          role=session['user'],
-                         metrics=metrics)
+                         metrics=metrics,
+                         active_page='dashboard')
 
 @app.route('/job-cards')
 def job_cards():
@@ -187,8 +177,8 @@ def job_cards():
     return render_template('job_cards.html', 
                          username=session['username'], 
                          role=session['user'],
-                         job_cards=job_cards)
-
+                         job_cards=job_cards,
+                         active_page='job_cards')
 
 @app.route('/job-cards/create', methods=['GET'])
 def create_job_card_form():
@@ -197,7 +187,8 @@ def create_job_card_form():
     
     return render_template('create_job_card.html', 
                          username=session['username'], 
-                         role=session['user'])
+                         role=session['user'],
+                         active_page='job_cards')
 
 @app.route('/job-cards/create', methods=['POST'])
 def create_job_card_post():
@@ -248,7 +239,8 @@ def assign_technician_form(jc_id):
                          username=session['username'], 
                          role=session['user'],
                          job_card=job_card,
-                         technicians=technicians)
+                         technicians=technicians,
+                         active_page='job_cards')
 
 @app.route('/job-cards/<int:jc_id>/assign', methods=['POST'])
 def assign_technician_post(jc_id):
@@ -270,7 +262,6 @@ def assign_technician_post(jc_id):
     
     return redirect(url_for('job_cards'))
 
-
 @app.route('/job-cards/<int:jc_id>/close', methods=['GET'])
 def close_job_card_form(jc_id):
     if 'user_id' not in session:
@@ -286,7 +277,8 @@ def close_job_card_form(jc_id):
     return render_template('close_job_card.html', 
                          username=session['username'], 
                          role=session['user'],
-                         job_card=job_card)
+                         job_card=job_card,
+                         active_page='job_cards')
 
 @app.route('/job-cards/<int:jc_id>/close', methods=['POST'])
 def close_job_card_post(jc_id):
@@ -296,7 +288,6 @@ def close_job_card_post(jc_id):
     conn = get_db()
     cursor = conn.cursor()
     
-    # Update job card as closed
     cursor.execute("""
         UPDATE tbl_service_jc 
         SET jc_closed = 'Closed', job_finding = %s, work_done_date = %s, hours = %s
@@ -308,7 +299,6 @@ def close_job_card_post(jc_id):
     conn.close()
     
     return redirect(url_for('job_cards'))
-
 
 @app.route('/job-cards/<int:jc_id>/payment', methods=['GET'])
 def payment_job_card_form(jc_id):
@@ -325,7 +315,8 @@ def payment_job_card_form(jc_id):
     return render_template('payment_job_card.html', 
                          username=session['username'], 
                          role=session['user'],
-                         job_card=job_card)
+                         job_card=job_card,
+                         active_page='job_cards')
 
 @app.route('/job-cards/<int:jc_id>/payment', methods=['POST'])
 def payment_job_card_post(jc_id):
@@ -349,7 +340,6 @@ def payment_job_card_post(jc_id):
     
     return redirect(url_for('job_cards'))
 
-
 @app.route('/customers')
 def customers():
     if 'user_id' not in session:
@@ -365,7 +355,8 @@ def customers():
     return render_template('customers.html', 
                          username=session['username'], 
                          role=session['user'],
-                         customers=customers)
+                         customers=customers,
+                         active_page='customers')
 
 @app.route('/customers/add', methods=['POST'])
 def add_customer():
@@ -418,7 +409,6 @@ def delete_customer(customer_id):
     
     return redirect(url_for('customers'))
 
-
 @app.route('/inventory')
 def inventory():
     if 'user_id' not in session:
@@ -437,7 +427,8 @@ def inventory():
                          username=session['username'], 
                          role=session['user'],
                          items=items,
-                         products=products)
+                         products=products,
+                         active_page='inventory')
 
 @app.route('/inventory/item/add', methods=['POST'])
 def add_item():
@@ -450,23 +441,6 @@ def add_item():
         INSERT INTO tbl_item (item_name, quantity, purchase_price)
         VALUES (%s, %s, %s)
     """, (request.form['item_name'], request.form['quantity'], request.form['purchase_price']))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    
-    return redirect(url_for('inventory'))
-
-@app.route('/inventory/product/add', methods=['POST'])
-def add_product():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO tbl_product (product_name, quantity, purchase_price)
-        VALUES (%s, %s, %s)
-    """, (request.form['product_name'], request.form['quantity'], request.form['purchase_price']))
     conn.commit()
     cursor.close()
     conn.close()
@@ -492,6 +466,37 @@ def edit_item():
     
     return redirect(url_for('inventory'))
 
+@app.route('/inventory/item/delete/<int:item_id>')
+def delete_item(item_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_item WHERE item_id = %s", (item_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('inventory'))
+
+@app.route('/inventory/product/add', methods=['POST'])
+def add_product():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO tbl_product (product_name, quantity, purchase_price)
+        VALUES (%s, %s, %s)
+    """, (request.form['product_name'], request.form['quantity'], request.form['purchase_price']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('inventory'))
+
 @app.route('/inventory/product/edit', methods=['POST'])
 def edit_product():
     if 'user_id' not in session:
@@ -511,20 +516,6 @@ def edit_product():
     
     return redirect(url_for('inventory'))
 
-@app.route('/inventory/item/delete/<int:item_id>')
-def delete_item(item_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM tbl_item WHERE item_id = %s", (item_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    
-    return redirect(url_for('inventory'))
-
 @app.route('/inventory/product/delete/<int:product_id>')
 def delete_product(product_id):
     if 'user_id' not in session:
@@ -537,8 +528,7 @@ def delete_product(product_id):
     cursor.close()
     conn.close()
     
-    return redirect(url_for('inventory'))   
-
+    return redirect(url_for('inventory'))
 
 @app.route('/technicians')
 def technicians():
@@ -555,7 +545,8 @@ def technicians():
     return render_template('technicians.html', 
                          username=session['username'], 
                          role=session['user'],
-                         technicians=technicians)
+                         technicians=technicians,
+                         active_page='technicians')
 
 @app.route('/technicians/add', methods=['POST'])
 def add_technician():
@@ -608,7 +599,6 @@ def delete_technician(tech_id):
     
     return redirect(url_for('technicians'))
 
-
 # ============ REPORTS MODULE ============
 
 @app.route('/reports')
@@ -618,7 +608,8 @@ def reports():
     
     return render_template('reports.html', 
                          username=session['username'], 
-                         role=session['user'])
+                         role=session['user'],
+                         active_page='reports')
 
 @app.route('/reports/financial')
 def financial_report():
@@ -629,7 +620,6 @@ def financial_report():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    # Date filter logic
     date_filter = ""
     if period == 'week':
         date_filter = "AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"
@@ -638,7 +628,6 @@ def financial_report():
     elif period == 'year':
         date_filter = "AND created_at >= DATE_SUB(NOW(), INTERVAL 365 DAY)"
     
-    # Get all payments with date filter
     cursor.execute(f"""
         SELECT * FROM tbl_service_jc 
         WHERE 1=1 {date_filter}
@@ -646,7 +635,6 @@ def financial_report():
     """)
     payments = cursor.fetchall()
     
-    # Calculate summary
     cursor.execute(f"""
         SELECT 
             COALESCE(SUM(CASE WHEN paid = 'Paid' THEN total_paid_amount ELSE amount END), 0) as total_revenue,
@@ -666,9 +654,9 @@ def financial_report():
                          username=session['username'],
                          role=session['user'],
                          payments=payments,
-                         summary=summary)
+                         summary=summary,
+                         active_page='reports')
 
-                         
 @app.route('/reports/job-cards')
 def job_card_report():
     if 'user_id' not in session:
@@ -677,13 +665,9 @@ def job_card_report():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    cursor.execute("""
-        SELECT * FROM tbl_service_jc 
-        ORDER BY created_at DESC
-    """)
+    cursor.execute("SELECT * FROM tbl_service_jc ORDER BY created_at DESC")
     job_cards = cursor.fetchall()
     
-    # Summary statistics
     cursor.execute("""
         SELECT 
             COUNT(*) as total,
@@ -702,7 +686,8 @@ def job_card_report():
                          username=session['username'],
                          role=session['user'],
                          job_cards=job_cards,
-                         summary=summary)
+                         summary=summary,
+                         active_page='reports')
 
 @app.route('/reports/stock')
 def stock_report():
@@ -718,7 +703,6 @@ def stock_report():
     cursor.execute("SELECT * FROM tbl_product ORDER BY product_name")
     products = cursor.fetchall()
     
-    # Calculate total stock value
     cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_item")
     items_total = cursor.fetchone()
     cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_product")
@@ -733,7 +717,8 @@ def stock_report():
                          items=items,
                          products=products,
                          items_total=items_total['total'],
-                         products_total=products_total['total'])
+                         products_total=products_total['total'],
+                         active_page='reports')
 
 @app.route('/reports/customers')
 def customer_report():
@@ -760,7 +745,8 @@ def customer_report():
     return render_template('customer_report.html',
                          username=session['username'],
                          role=session['user'],
-                         customers=customers)
+                         customers=customers,
+                         active_page='reports')
 
 @app.route('/reports/technicians')
 def technician_report():
@@ -788,8 +774,8 @@ def technician_report():
     return render_template('technician_report.html',
                          username=session['username'],
                          role=session['user'],
-                         technicians=technicians)
-
+                         technicians=technicians,
+                         active_page='reports')
 
 # ============ MPESA NUMBER MANAGEMENT ============
 
@@ -808,7 +794,8 @@ def mpesa_numbers():
     return render_template('mpesa.html',
                          username=session['username'],
                          role=session['user'],
-                         mpesa_numbers=mpesa_numbers)
+                         mpesa_numbers=mpesa_numbers,
+                         active_page='mpesa')
 
 @app.route('/mpesa/add', methods=['POST'])
 def add_mpesa():
@@ -852,12 +839,479 @@ def delete_mpesa(mpesa_id):
     cursor.close()
     conn.close()
     
-    return redirect(url_for('mpesa_numbers'))                       
+    return redirect(url_for('mpesa_numbers'))
+
+# ============ USER MANAGEMENT ============
+
+@app.route('/users')
+def users():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    if session.get('user') != 'admin':
+        return redirect(url_for('dashboard'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_admin ORDER BY user_id DESC")
+    users = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return render_template('users.html',
+                         username=session['username'],
+                         role=session['user'],
+                         users=users,
+                         active_page='users')
+
+@app.route('/users/add', methods=['POST'])
+def add_user():
+    if 'user_id' not in session or session.get('user') != 'admin':
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO tbl_admin (username, password, user, email)
+        VALUES (%s, %s, %s, %s)
+    """, (request.form['username'], request.form['password'], 
+          request.form['role'], request.form['email']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('users'))
+
+@app.route('/users/edit', methods=['POST'])
+def edit_user():
+    if 'user_id' not in session or session.get('user') != 'admin':
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    if request.form['password']:
+        cursor.execute("""
+            UPDATE tbl_admin 
+            SET username = %s, password = %s, user = %s, email = %s
+            WHERE user_id = %s
+        """, (request.form['username'], request.form['password'],
+              request.form['role'], request.form['email'], request.form['user_id']))
+    else:
+        cursor.execute("""
+            UPDATE tbl_admin 
+            SET username = %s, user = %s, email = %s
+            WHERE user_id = %s
+        """, (request.form['username'], request.form['role'],
+              request.form['email'], request.form['user_id']))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('users'))
+
+@app.route('/users/delete/<int:user_id>')
+def delete_user(user_id):
+    if 'user_id' not in session or session.get('user') != 'admin':
+        return redirect(url_for('login'))
+    
+    if user_id == session['user_id']:
+        return redirect(url_for('users'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_admin WHERE user_id = %s", (user_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('users'))
+
+
+
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+
+# ============ PROJECT MANAGEMENT ============
+
+@app.route('/projects')
+def projects():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_project ORDER BY project_id DESC")
+    projects = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return render_template('projects.html',
+                         username=session['username'],
+                         role=session['user'],
+                         projects=projects,
+                         active_page='projects')
+
+@app.route('/projects/add', methods=['POST'])
+def add_project():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO tbl_project (project_name, description, start_date, end_date, status, budget, customer_id, assigned_to)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (request.form['project_name'], request.form['project_description'],
+          request.form['start_date'] or None, request.form['end_date'] or None,
+          request.form['status'], request.form['budget'] or 0,
+          request.form['customer_id'] or None, request.form['assigned_to'] or None))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('projects'))
+
+@app.route('/projects/edit', methods=['POST'])
+def edit_project():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE tbl_project 
+        SET project_name = %s, description = %s, start_date = %s, 
+            end_date = %s, status = %s, budget = %s, customer_id = %s, assigned_to = %s
+        WHERE project_id = %s
+    """, (request.form['project_name'], request.form['project_description'],
+          request.form['start_date'] or None, request.form['end_date'] or None,
+          request.form['status'], request.form['budget'] or 0,
+          request.form['customer_id'] or None, request.form['assigned_to'] or None,
+          request.form['project_id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('projects'))
+
+@app.route('/projects/delete/<int:project_id>')
+def delete_project(project_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_project WHERE project_id = %s", (project_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('projects'))
+
+@app.route('/projects/view/<int:project_id>')
+def view_project(project_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_project WHERE project_id = %s", (project_id,))
+    project = cursor.fetchone()
+    
+    # Get associated job cards for this project
+    cursor.execute("""
+        SELECT * FROM tbl_service_jc 
+        WHERE customer_id = %s OR customer_name LIKE %s
+        ORDER BY created_at DESC
+        LIMIT 10
+    """, (project.get('customer_id'), f"%{project.get('project_name')}%"))
+    job_cards = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return render_template('view_project.html',
+                         username=session['username'],
+                         role=session['user'],
+                         project=project,
+                         job_cards=job_cards,
+                         active_page='projects')
+
+
+# ============ CATEGORIES, BRANDS, SUBCATEGORIES MANAGEMENT ============
+
+# Categories
+@app.route('/categories')
+def categories():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_category ORDER BY category_id DESC")
+    categories = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return render_template('categories.html',
+                         username=session['username'],
+                         role=session['user'],
+                         categories=categories,
+                         active_page='categories')
+
+@app.route('/categories/add', methods=['POST'])
+def add_category():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO tbl_category (category_name, description) VALUES (%s, %s)",
+                   (request.form['category_name'], request.form['description']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('categories'))
+
+@app.route('/categories/edit', methods=['POST'])
+def edit_category():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tbl_category SET category_name = %s, description = %s WHERE category_id = %s",
+                   (request.form['category_name'], request.form['description'], request.form['category_id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('categories'))
+
+@app.route('/categories/delete/<int:category_id>')
+def delete_category(category_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_category WHERE category_id = %s", (category_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('categories'))
+
+# Brands
+@app.route('/brands')
+def brands():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_brand ORDER BY brand_id DESC")
+    brands = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return render_template('brands.html',
+                         username=session['username'],
+                         role=session['user'],
+                         brands=brands,
+                         active_page='brands')
+
+@app.route('/brands/add', methods=['POST'])
+def add_brand():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO tbl_brand (brand_name, description) VALUES (%s, %s)",
+                   (request.form['brand_name'], request.form['description']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('brands'))
+
+@app.route('/brands/edit', methods=['POST'])
+def edit_brand():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tbl_brand SET brand_name = %s, description = %s WHERE brand_id = %s",
+                   (request.form['brand_name'], request.form['description'], request.form['brand_id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('brands'))
+
+@app.route('/brands/delete/<int:brand_id>')
+def delete_brand(brand_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_brand WHERE brand_id = %s", (brand_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('brands'))
+
+# Subcategories
+@app.route('/subcategories')
+def subcategories():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT s.*, c.category_name 
+        FROM tbl_subcategory s
+        LEFT JOIN tbl_category c ON s.category_id = c.category_id
+        ORDER BY s.subcategory_id DESC
+    """)
+    subcategories = cursor.fetchall()
+    
+    cursor.execute("SELECT category_id, category_name FROM tbl_category")
+    categories = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return render_template('subcategories.html',
+                         username=session['username'],
+                         role=session['user'],
+                         subcategories=subcategories,
+                         categories=categories,
+                         active_page='subcategories')
+
+@app.route('/subcategories/add', methods=['POST'])
+def add_subcategory():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO tbl_subcategory (subcategory_name, category_id, description) VALUES (%s, %s, %s)",
+                   (request.form['subcategory_name'], request.form['category_id'] or None, request.form['description']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('subcategories'))
+
+@app.route('/subcategories/edit', methods=['POST'])
+def edit_subcategory():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE tbl_subcategory 
+        SET subcategory_name = %s, category_id = %s, description = %s 
+        WHERE subcategory_id = %s
+    """, (request.form['subcategory_name'], request.form['category_id'] or None, 
+          request.form['description'], request.form['subcategory_id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('subcategories'))
+
+@app.route('/subcategories/delete/<int:subcategory_id>')
+def delete_subcategory(subcategory_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_subcategory WHERE subcategory_id = %s", (subcategory_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('subcategories'))
+
+# Business Units
+@app.route('/business-units')
+def business_units():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_business ORDER BY business_id DESC")
+    business_units = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return render_template('business_units.html',
+                         username=session['username'],
+                         role=session['user'],
+                         business_units=business_units,
+                         active_page='business_units')
+
+@app.route('/business-units/add', methods=['POST'])
+def add_business_unit():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO tbl_business (business_name, description) VALUES (%s, %s)",
+                   (request.form['business_name'], request.form['description']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('business_units'))
+
+@app.route('/business-units/edit', methods=['POST'])
+def edit_business_unit():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE tbl_business SET business_name = %s, description = %s WHERE business_id = %s",
+                   (request.form['business_name'], request.form['description'], request.form['business_id']))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('business_units'))
+
+@app.route('/business-units/delete/<int:business_id>')
+def delete_business_unit(business_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_business WHERE business_id = %s", (business_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('business_units'))                       
+
 
 if __name__ == '__main__':
     app.run(debug=True)

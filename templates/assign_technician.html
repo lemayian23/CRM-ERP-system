@@ -1,82 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Aquashine - Assign Technician</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar navbar-dark bg-primary px-4">
-        <span class="navbar-brand">Aquashine CRM</span>
-        <span class="text-white">Welcome, {{ username }} ({{ role }})</span>
-        <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
-    </nav>
-    
-    <div class="container-fluid mt-4">
+{% extends "base.html" %}
+
+{% block title %}Assign Technician{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="fas fa-user-check me-2"></i>Assign Technician</h4>
+        <p class="text-muted mb-0">Assign a technician to Job Card #{{ job_card.id }}</p>
+    </div>
+    <a href="/job-cards" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back to List
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Job Card Details</h6>
+    </div>
+    <div class="card-body">
         <div class="row">
-            <div class="col-md-2">
-                <div class="list-group">
-                    <a href="/dashboard" class="list-group-item list-group-item-action">Dashboard</a>
-                    <a href="/job-cards" class="list-group-item list-group-item-action active">Job Cards</a>
-                    <a href="#" class="list-group-item list-group-item-action">Customers</a>
-                    <a href="#" class="list-group-item list-group-item-action">Inventory</a>
-                    <a href="#" class="list-group-item list-group-item-action">Technicians</a>
-                    <a href="#" class="list-group-item list-group-item-action">Reports</a>
-                </div>
+            <div class="col-md-4">
+                <strong>Customer:</strong><br>
+                {{ job_card.customer_name }}
             </div>
-            
-            <div class="col-md-10">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5>Assign Technician to Job Card #{{ job_card.id }}</h5>
-                    <a href="/job-cards" class="btn btn-secondary btn-sm">Back</a>
-                </div>
-                
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h6>Job Card Details</h6>
-                        <p><strong>Customer:</strong> {{ job_card.customer_name }}</p>
-                        <p><strong>Amount:</strong> KES {{ "{:,.2f}".format(job_card.amount or 0) }}</p>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div class="card-body">
-                        <form method="POST" action="/job-cards/{{ job_card.id }}/assign">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Select Technician</label>
-                                    <select name="technician" class="form-control" required>
-                                        <option value="">-- Select Technician --</option>
-                                        {% for tech in technicians %}
-                                        <option value="{{ tech.tech_name }}">{{ tech.tech_name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Proposed Work Date</label>
-                                    <input type="date" name="proposed_work_date" class="form-control" required>
-                                </div>
-                            </div>
-                            
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">Time Slot</label>
-                                    <select name="time_slot" class="form-control" required>
-                                        <option value="Morning">Morning (8AM - 12PM)</option>
-                                        <option value="Afternoon">Afternoon (1PM - 5PM)</option>
-                                        <option value="Full Day">Full Day</option>
-                                    </select>
-                                </div>
-                            </div>
-                            
-                            <button type="submit" class="btn btn-primary">Assign Technician</button>
-                        </form>
-                    </div>
-                </div>
+            <div class="col-md-4">
+                <strong>Amount:</strong><br>
+                KES {{ "{:,.2f}".format(job_card.amount or 0) }}
+            </div>
+            <div class="col-md-4">
+                <strong>Current Status:</strong><br>
+                {% if job_card.jc_assigned_to %}
+                    <span class="badge bg-success">Assigned to {{ job_card.jc_assigned_to }}</span>
+                {% else %}
+                    <span class="badge bg-warning">Unassigned</span>
+                {% endif %}
             </div>
         </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="/job-cards/{{ job_card.id }}/assign">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Select Technician <span class="text-danger">*</span></label>
+                    <select name="technician" class="form-control" required>
+                        <option value="">-- Select Technician --</option>
+                        {% for tech in technicians %}
+                        <option value="{{ tech.tech_name }}" {% if job_card.jc_assigned_to == tech.tech_name %}selected{% endif %}>
+                            {{ tech.tech_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Proposed Work Date <span class="text-danger">*</span></label>
+                    <input type="date" name="proposed_work_date" class="form-control" 
+                           value="{{ job_card.proposed_work_date }}" required>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Time Slot <span class="text-danger">*</span></label>
+                    <select name="time_slot" class="form-control" required>
+                        <option value="Morning" {% if job_card.time_slot == 'Morning' %}selected{% endif %}>Morning (8AM - 12PM)</option>
+                        <option value="Afternoon" {% if job_card.time_slot == 'Afternoon' %}selected{% endif %}>Afternoon (1PM - 5PM)</option>
+                        <option value="Full Day" {% if job_card.time_slot == 'Full Day' %}selected{% endif %}>Full Day</option>
+                    </select>
+                </div>
+            </div>
+            
+            <hr>
+            <div class="text-end">
+                <a href="/job-cards" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-1"></i>Assign Technician
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
