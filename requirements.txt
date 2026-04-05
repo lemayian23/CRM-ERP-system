@@ -2,7 +2,6 @@ Flask==2.3.0
 mysql-connector-python==8.1.0
 python-dotenv==1.0.0
 openpyxl==3.1.2
-# pdfkit==1.0.0  # Comment this out
-# weasyprint==60.1  # Comment this out
+pdfkit==1.0.0
+WeasyPrint==60.2
 waitress==2.1.2
-WeasyPrint==60.2"WeasyPrint==60.2" 
