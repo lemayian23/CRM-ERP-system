@@ -2297,19 +2297,13 @@ import os
 # For Render.com compatibility
 port = int(os.environ.get('PORT', 5000))
 
-# TEMPORARY ROUTE - Remove after database is initialized
-@app.route('/init-db')
-def init_database():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    # Only allow admin to run this
-    if session.get('user') != 'admin':
-        return "Unauthorized", 401
-    
+# TEMPORARY - Remove after running once
+@app.route('/create-tables')
+def create_tables():
+    from config.database import init_db
     try:
-        from config.database import init_db
         init_db()
-        return "Database initialized successfully! You can now remove this route.", 200
+        return "Tables created successfully! ✅", 200
     except Exception as e:
         return f"Error: {str(e)}", 500
 
