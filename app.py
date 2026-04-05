@@ -765,7 +765,7 @@ def add_user():
         return redirect(url_for('login'))
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO tbl_admin (username, password, user, email) VALUES (%s, %s, %s, %s)",
+    cursor.execute("INSERT INTO tbl_admin (username, password, user_type, email) VALUES (%s, %s, %s, %s)",
                    (request.form['username'], request.form['password'], request.form['role'], request.form['email']))
     user_id = cursor.lastrowid
     conn.commit()
@@ -781,10 +781,10 @@ def edit_user():
     conn = get_db()
     cursor = conn.cursor()
     if request.form['password']:
-        cursor.execute("UPDATE tbl_admin SET username = %s, password = %s, user = %s, email = %s WHERE user_id = %s",
+        cursor.execute("UPDATE tbl_admin SET username = %s, password = %s, user_type = %s, email = %s WHERE user_id = %s",
                        (request.form['username'], request.form['password'], request.form['role'], request.form['email'], request.form['user_id']))
     else:
-        cursor.execute("UPDATE tbl_admin SET username = %s, user = %s, email = %s WHERE user_id = %s",
+        cursor.execute("UPDATE tbl_admin SET username = %s, user_type = %s, email = %s WHERE user_id = %s",
                        (request.form['username'], request.form['role'], request.form['email'], request.form['user_id']))
     conn.commit()
     log_audit('UPDATE', 'tbl_admin', request.form['user_id'], None, {'username': request.form['username']})
