@@ -5,7 +5,6 @@ import os
 load_dotenv()
 
 def get_db():
-    # For TiDB Cloud Serverless - SSL is required
     return mysql.connector.connect(
         host=os.getenv('DB_HOST'),
         port=int(os.getenv('DB_PORT', 4000)),
@@ -13,8 +12,8 @@ def get_db():
         password=os.getenv('DB_PASSWORD'),
         database=os.getenv('DB_NAME', 'test'),
         use_pure=True,
-        ssl_disabled=False,  # Enable SSL (required for TiDB Cloud)
-        ssl_verify_cert=False,  # Don't verify cert for now
+        ssl_disabled=False,
+        ssl_verify_cert=False,
         ssl_verify_identity=False
     )
 
@@ -22,9 +21,45 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Admin table
+    # Drop existing tables to recreate with correct schema (WARNING: deletes data!)
+    cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+    cursor.execute("DROP TABLE IF EXISTS tbl_quotation_item")
+    cursor.execute("DROP TABLE IF EXISTS tbl_quotation")
+    cursor.execute("DROP TABLE IF EXISTS tbl_material_received")
+    cursor.execute("DROP TABLE IF EXISTS tbl_purchase_order_item")
+    cursor.execute("DROP TABLE IF EXISTS tbl_purchase_order")
+    cursor.execute("DROP TABLE IF EXISTS tbl_supplier")
+    cursor.execute("DROP TABLE IF EXISTS tbl_audit_log")
+    cursor.execute("DROP TABLE IF EXISTS tbl_daily_status")
+    cursor.execute("DROP TABLE IF EXISTS tbl_planner")
+    cursor.execute("DROP TABLE IF EXISTS tbl_sales_agents")
+    cursor.execute("DROP TABLE IF EXISTS tbl_commerce")
+    cursor.execute("DROP TABLE IF EXISTS tbl_area")
+    cursor.execute("DROP TABLE IF EXISTS tbl_amc_jc")
+    cursor.execute("DROP TABLE IF EXISTS tbl_amc")
+    cursor.execute("DROP TABLE IF EXISTS tbl_service_calls")
+    cursor.execute("DROP TABLE IF EXISTS tbl_rates")
+    cursor.execute("DROP TABLE IF EXISTS tbl_business")
+    cursor.execute("DROP TABLE IF EXISTS tbl_subcategory")
+    cursor.execute("DROP TABLE IF EXISTS tbl_brand")
+    cursor.execute("DROP TABLE IF EXISTS tbl_category")
+    cursor.execute("DROP TABLE IF EXISTS tbl_stock_movement_product")
+    cursor.execute("DROP TABLE IF EXISTS tbl_stock_movement_item")
+    cursor.execute("DROP TABLE IF EXISTS tbl_stock_correction")
+    cursor.execute("DROP TABLE IF EXISTS tbl_service_jc_item")
+    cursor.execute("DROP TABLE IF EXISTS tbl_service_jc")
+    cursor.execute("DROP TABLE IF EXISTS tbl_customer")
+    cursor.execute("DROP TABLE IF EXISTS tbl_technician")
+    cursor.execute("DROP TABLE IF EXISTS tbl_item")
+    cursor.execute("DROP TABLE IF EXISTS tbl_product")
+    cursor.execute("DROP TABLE IF EXISTS tbl_project")
+    cursor.execute("DROP TABLE IF EXISTS tbl_mpesa_number")
+    cursor.execute("DROP TABLE IF EXISTS tbl_admin")
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
+    
+    # Admin table - NOTE: column is 'user_type' not 'user'
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_admin (
+        CREATE TABLE tbl_admin (
             user_id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(100) NOT NULL UNIQUE,
             password VARCHAR(255) NOT NULL,
@@ -34,17 +69,9 @@ def init_db():
         )
     """)
     
-    # Insert default admin
-    cursor.execute("SELECT COUNT(*) FROM tbl_admin WHERE username='admin'")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute("""
-            INSERT INTO tbl_admin (username, password, user_type, email)
-            VALUES ('admin', 'admin123', 'admin', 'admin@aquashine.com')
-        """)
-    
-    # Customer table
+    # Customer table - PRIMARY KEY is 'customer_id'
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_customer (
+        CREATE TABLE tbl_customer (
             customer_id INT AUTO_INCREMENT PRIMARY KEY,
             customer_name VARCHAR(200),
             customer_type ENUM('Individual', 'Company', 'Reseller') DEFAULT 'Individual',
@@ -60,7 +87,7 @@ def init_db():
     
     # Technician table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_technician (
+        CREATE TABLE tbl_technician (
             tech_id INT AUTO_INCREMENT PRIMARY KEY,
             tech_name VARCHAR(100),
             email VARCHAR(150),
@@ -69,9 +96,46 @@ def init_db():
         )
     """)
     
+    # Item table - PRIMARY KEY is 'item_id'
+    cursor.execute("""
+        CREATE TABLE tbl_item (
+            item_id INT AUTO_INCREMENT PRIMARY KEY,
+            item_name VARCHAR(200),
+            quantity INT DEFAULT 0,
+            purchase_price DECIMAL(10,2)
+        )
+    """)
+    
+    # Product table - PRIMARY KEY is 'product_id', column is 'product_name'
+    cursor.execute("""
+        CREATE TABLE tbl_product (
+            product_id INT AUTO_INCREMENT PRIMARY KEY,
+            product_name VARCHAR(200),
+            quantity INT DEFAULT 0,
+            purchase_price DECIMAL(10,2)
+        )
+    """)
+    
+    # Project table - PRIMARY KEY is 'project_id'
+    cursor.execute("""
+        CREATE TABLE tbl_project (
+            project_id INT AUTO_INCREMENT PRIMARY KEY,
+            project_name VARCHAR(200),
+            description TEXT,
+            start_date DATE,
+            end_date DATE,
+            status VARCHAR(50),
+            budget DECIMAL(12,2),
+            customer_id INT,
+            assigned_to VARCHAR(100),
+            close_project VARCHAR(20),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
     # Job Card table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_service_jc (
+        CREATE TABLE tbl_service_jc (
             id INT AUTO_INCREMENT PRIMARY KEY,
             jc_number VARCHAR(50) UNIQUE,
             jc_type VARCHAR(50),
@@ -102,7 +166,7 @@ def init_db():
     
     # Job Card Items table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_service_jc_item (
+        CREATE TABLE tbl_service_jc_item (
             id INT AUTO_INCREMENT PRIMARY KEY,
             service_jc_id INT,
             item_id INT,
@@ -116,46 +180,9 @@ def init_db():
         )
     """)
     
-    # Item table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_item (
-            item_id INT AUTO_INCREMENT PRIMARY KEY,
-            item_name VARCHAR(200),
-            quantity INT DEFAULT 0,
-            purchase_price DECIMAL(10,2)
-        )
-    """)
-    
-    # Product table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_product (
-            product_id INT AUTO_INCREMENT PRIMARY KEY,
-            product_name VARCHAR(200),
-            quantity INT DEFAULT 0,
-            purchase_price DECIMAL(10,2)
-        )
-    """)
-    
-    # Project table
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_project (
-            project_id INT AUTO_INCREMENT PRIMARY KEY,
-            project_name VARCHAR(200),
-            description TEXT,
-            start_date DATE,
-            end_date DATE,
-            status VARCHAR(50),
-            budget DECIMAL(12,2),
-            customer_id INT,
-            assigned_to VARCHAR(100),
-            close_project VARCHAR(20),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    
     # Mpesa numbers table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_mpesa_number (
+        CREATE TABLE tbl_mpesa_number (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(100),
             number VARCHAR(50)
@@ -164,7 +191,7 @@ def init_db():
     
     # Stock movement tables
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_stock_movement_item (
+        CREATE TABLE tbl_stock_movement_item (
             movement_id INT AUTO_INCREMENT PRIMARY KEY,
             item_id INT,
             item_name VARCHAR(200),
@@ -181,7 +208,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_stock_movement_product (
+        CREATE TABLE tbl_stock_movement_product (
             movement_id INT AUTO_INCREMENT PRIMARY KEY,
             product_id INT,
             product_name VARCHAR(200),
@@ -197,9 +224,25 @@ def init_db():
         )
     """)
     
+    # Stock correction table
+    cursor.execute("""
+        CREATE TABLE tbl_stock_correction (
+            correction_id INT AUTO_INCREMENT PRIMARY KEY,
+            item_id INT,
+            item_name VARCHAR(200),
+            product_id INT,
+            product_name VARCHAR(200),
+            current_quantity INT,
+            corrected_quantity INT,
+            reason TEXT,
+            created_by VARCHAR(100),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
     # Categories, Brands, Subcategories
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_category (
+        CREATE TABLE tbl_category (
             category_id INT AUTO_INCREMENT PRIMARY KEY,
             category_name VARCHAR(100),
             description TEXT,
@@ -208,7 +251,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_brand (
+        CREATE TABLE tbl_brand (
             brand_id INT AUTO_INCREMENT PRIMARY KEY,
             brand_name VARCHAR(100),
             description TEXT,
@@ -217,7 +260,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_subcategory (
+        CREATE TABLE tbl_subcategory (
             subcategory_id INT AUTO_INCREMENT PRIMARY KEY,
             subcategory_name VARCHAR(100),
             category_id INT,
@@ -227,7 +270,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_business (
+        CREATE TABLE tbl_business (
             business_id INT AUTO_INCREMENT PRIMARY KEY,
             business_name VARCHAR(100),
             description TEXT,
@@ -237,7 +280,7 @@ def init_db():
     
     # Rates table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_rates (
+        CREATE TABLE tbl_rates (
             rate_id INT AUTO_INCREMENT PRIMARY KEY,
             rate_name VARCHAR(100),
             rate_type VARCHAR(20),
@@ -251,7 +294,7 @@ def init_db():
     
     # Service Calls table
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_service_calls (
+        CREATE TABLE tbl_service_calls (
             call_id INT AUTO_INCREMENT PRIMARY KEY,
             customer_name VARCHAR(200),
             customer_phone VARCHAR(50),
@@ -269,7 +312,7 @@ def init_db():
     
     # AMC tables
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_amc (
+        CREATE TABLE tbl_amc (
             amc_id INT AUTO_INCREMENT PRIMARY KEY,
             amc_number VARCHAR(50),
             customer_id INT,
@@ -287,7 +330,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_amc_jc (
+        CREATE TABLE tbl_amc_jc (
             amc_jc_id INT AUTO_INCREMENT PRIMARY KEY,
             amc_id INT,
             jc_id INT,
@@ -301,7 +344,7 @@ def init_db():
     
     # Areas and Commerce
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_area (
+        CREATE TABLE tbl_area (
             area_id INT AUTO_INCREMENT PRIMARY KEY,
             area_name VARCHAR(100),
             zone VARCHAR(50),
@@ -313,7 +356,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_commerce (
+        CREATE TABLE tbl_commerce (
             commerce_id INT AUTO_INCREMENT PRIMARY KEY,
             commerce_name VARCHAR(100),
             area_id INT,
@@ -328,7 +371,7 @@ def init_db():
     
     # Sales Agents
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_sales_agents (
+        CREATE TABLE tbl_sales_agents (
             agent_id INT AUTO_INCREMENT PRIMARY KEY,
             agent_name VARCHAR(100),
             email VARCHAR(150),
@@ -346,7 +389,7 @@ def init_db():
     
     # Planner
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_planner (
+        CREATE TABLE tbl_planner (
             event_id INT AUTO_INCREMENT PRIMARY KEY,
             event_title VARCHAR(200),
             event_description TEXT,
@@ -365,7 +408,7 @@ def init_db():
     
     # Daily Status
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_daily_status (
+        CREATE TABLE tbl_daily_status (
             report_id INT AUTO_INCREMENT PRIMARY KEY,
             report_date DATE UNIQUE,
             total_jobs INT DEFAULT 0,
@@ -380,7 +423,7 @@ def init_db():
     
     # Audit Log
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_audit_log (
+        CREATE TABLE tbl_audit_log (
             log_id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT,
             username VARCHAR(100),
@@ -397,7 +440,7 @@ def init_db():
     
     # Suppliers
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_supplier (
+        CREATE TABLE tbl_supplier (
             supplier_id INT AUTO_INCREMENT PRIMARY KEY,
             supplier_name VARCHAR(200),
             contact_person VARCHAR(100),
@@ -412,7 +455,7 @@ def init_db():
     
     # Purchase Orders
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_purchase_order (
+        CREATE TABLE tbl_purchase_order (
             po_id INT AUTO_INCREMENT PRIMARY KEY,
             po_number VARCHAR(50) UNIQUE,
             supplier_id INT,
@@ -428,7 +471,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_purchase_order_item (
+        CREATE TABLE tbl_purchase_order_item (
             po_item_id INT AUTO_INCREMENT PRIMARY KEY,
             po_id INT,
             item_type VARCHAR(20),
@@ -442,7 +485,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_material_received (
+        CREATE TABLE tbl_material_received (
             receive_id INT AUTO_INCREMENT PRIMARY KEY,
             po_id INT,
             po_number VARCHAR(50),
@@ -463,7 +506,7 @@ def init_db():
     
     # Quotations
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_quotation (
+        CREATE TABLE tbl_quotation (
             quote_id INT AUTO_INCREMENT PRIMARY KEY,
             quote_number VARCHAR(50) UNIQUE,
             customer_id INT,
@@ -490,7 +533,7 @@ def init_db():
     """)
     
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tbl_quotation_item (
+        CREATE TABLE tbl_quotation_item (
             quote_item_id INT AUTO_INCREMENT PRIMARY KEY,
             quote_id INT,
             item_type VARCHAR(20),
@@ -502,13 +545,20 @@ def init_db():
         )
     """)
     
-    # Insert default admin if not exists
-    cursor.execute("SELECT COUNT(*) FROM tbl_admin WHERE username='admin'")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute("""
-            INSERT INTO tbl_admin (username, password, user_type, email)
-            VALUES ('admin', 'admin123', 'admin', 'admin@aquashine.com')
-        """)
+    # Insert default admin
+    cursor.execute("INSERT INTO tbl_admin (username, password, user_type, email) VALUES ('admin', 'admin123', 'admin', 'admin@aquashine.com')")
+    
+    # Insert sample customers
+    cursor.execute("INSERT INTO tbl_customer (customer_name, customer_type) VALUES ('John Doe', 'Individual'), ('ABC Corp', 'Company'), ('Tech Solutions', 'Reseller')")
+    
+    # Insert sample items
+    cursor.execute("INSERT INTO tbl_item (item_name, quantity, purchase_price) VALUES ('Filter', 100, 50.00), ('Pipe', 50, 75.00)")
+    
+    # Insert sample products
+    cursor.execute("INSERT INTO tbl_product (product_name, quantity, purchase_price) VALUES ('Water Pump', 200, 2500.00), ('Hose', 150, 30.00)")
+    
+    # Insert sample technicians
+    cursor.execute("INSERT INTO tbl_technician (tech_name, status) VALUES ('Mike Tech', 'active'), ('Sarah Fixer', 'active')")
     
     conn.commit()
     cursor.close()
