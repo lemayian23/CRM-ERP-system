@@ -2290,6 +2290,13 @@ def create_quotation_post():
     
     return redirect(url_for('quotations'))
 
+
+
+import os
+
+# For Render.com compatibility
+port = int(os.environ.get('PORT', 5000))
+
 # TEMPORARY ROUTE - Remove after database is initialized
 @app.route('/init-db')
 def init_database():
@@ -2305,11 +2312,6 @@ def init_database():
         return "Database initialized successfully! You can now remove this route.", 200
     except Exception as e:
         return f"Error: {str(e)}", 500
-
-import os
-
-# For Render.com compatibility
-port = int(os.environ.get('PORT', 5000))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port, debug=False)
