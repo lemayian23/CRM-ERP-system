@@ -2297,13 +2297,13 @@ import os
 # For Render.com compatibility
 port = int(os.environ.get('PORT', 5000))
 
-# TEMPORARY - Remove after running once
+# TEMPORARY ROUTE - Remove after database is initialized
 @app.route('/create-tables')
 def create_tables():
     from config.database import init_db
     try:
         init_db()
-        return "Tables created successfully! ✅", 200
+        return "Tables created successfully! You can now remove this route.", 200
     except Exception as e:
         return f"Error: {str(e)}", 500
 
