@@ -2290,6 +2290,22 @@ def create_quotation_post():
     
     return redirect(url_for('quotations'))
 
+# TEMPORARY ROUTE - Remove after database is initialized
+@app.route('/init-db')
+def init_database():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    # Only allow admin to run this
+    if session.get('user') != 'admin':
+        return "Unauthorized", 401
+    
+    try:
+        from config.database import init_db
+        init_db()
+        return "Database initialized successfully! You can now remove this route.", 200
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
 import os
 
 # For Render.com compatibility
