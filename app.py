@@ -2291,6 +2291,38 @@ def create_quotation_post():
     return redirect(url_for('quotations'))
 
 
+from weasyprint import HTML
+
+@app.route('/pdf/job-card/<int:jc_id>')
+def pdf_job_card(jc_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_service_jc WHERE id = %s", (jc_id,))
+    job_card = cursor.fetchone()
+    cursor.execute("SELECT * FROM tbl_mpesa_number")
+    mpesa_numbers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_job_card.html', 
+                                   job_card=job_card, 
+                                   mpesa_numbers=mpesa_numbers,
+                                   date=date.today())
+    
+    # Generate PDF with WeasyPrint
+    pdf_file = HTML(string=rendered_html).write_pdf()
+    
+    return send_file(
+        BytesIO(pdf_file),
+        as_attachment=True,
+        download_name=f'job_card_{jc_id}.pdf',
+        mimetype='application/pdf'
+    )
+
+
 
 import os
 
