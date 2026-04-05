@@ -1917,77 +1917,10 @@ def view_daily_report(report_date):
     return render_template('view_daily_report.html', username=session['username'], role=session['user'],
                          report=report, jobs=jobs, report_date=report_date, active_page='daily_status')
 
-# ============ PDF GENERATION ============
+# ============ PDF GENERATION (DISABLED FOR RENDER) ============
+# PDF functionality is disabled for Render deployment due to wkhtmltopdf requirements
+# To enable, install wkhtmltopdf on Render or use an alternative PDF library
 
-# Configure wkhtmltopdf path
-# wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-# config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-"""
-@app.route('/pdf/job-card/<int:jc_id>')
-def pdf_job_card(jc_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_service_jc WHERE id = %s", (jc_id,))
-    job_card = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_mpesa_number")
-    mpesa_numbers = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    rendered_html = render_template('pdf_job_card.html', job_card=job_card, mpesa_numbers=mpesa_numbers,
-                                   username=session['username'], date=date.today())
-    pdf_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    pdfkit.from_string(rendered_html, pdf_file.name, configuration=config)
-    pdf_file.close()
-    return send_file(pdf_file.name, as_attachment=True, download_name=f'job_card_{jc_id}.pdf')
-
-@app.route('/pdf/financial-report')
-def pdf_financial_report():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT COALESCE(SUM(CASE WHEN paid = 'Paid' THEN total_paid_amount ELSE amount END), 0) as total_revenue,
-               COALESCE(SUM(CASE WHEN paid != 'Paid' AND jc_closed = 'Closed' THEN amount ELSE 0 END), 0) as pending_amount,
-               COUNT(CASE WHEN paid = 'Paid' THEN 1 END) as paid_count, COUNT(*) as total_jobs
-        FROM tbl_service_jc
-    """)
-    summary = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_service_jc ORDER BY created_at DESC LIMIT 50")
-    payments = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    rendered_html = render_template('pdf_financial_report.html', summary=summary, payments=payments, date=date.today())
-    pdf_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    pdfkit.from_string(rendered_html, pdf_file.name, configuration=config)
-    pdf_file.close()
-    return send_file(pdf_file.name, as_attachment=True, download_name='financial_report.pdf')
-
-@app.route('/pdf/stock-report')
-def pdf_stock_report():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_item ORDER BY item_name")
-    items = cursor.fetchall()
-    cursor.execute("SELECT * FROM tbl_product ORDER BY product_name")
-    products = cursor.fetchall()
-    cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_item")
-    items_total = cursor.fetchone()
-    cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_product")
-    products_total = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    rendered_html = render_template('pdf_stock_report.html', items=items, products=products,
-                                   items_total=items_total['total'], products_total=products_total['total'], date=date.today())
-    pdf_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    pdfkit.from_string(rendered_html, pdf_file.name, configuration=config)
-    pdf_file.close()
-    return send_file(pdf_file.name, as_attachment=True, download_name='stock_report.pdf')
-"""
 # ============ AUDIT LOG ============
 
 @app.route('/audit-log')
@@ -2029,7 +1962,6 @@ def audit_log():
     conn.close()
     return render_template('audit_log.html', username=session['username'], role=session['user'],
                          logs=logs, actions=actions, tables=tables, active_page='audit_log')
-
 
 # ============ SUPPLIERS ============
 
@@ -2142,7 +2074,6 @@ def create_po_post():
           request.form['order_date'], request.form['expected_delivery'], request.form['notes'], session['username']))
     po_id = cursor.lastrowid
     
-    # Add items
     item_ids = request.form.getlist('item_id')
     item_quantities = request.form.getlist('item_quantity')
     item_prices = request.form.getlist('item_price')
@@ -2154,7 +2085,6 @@ def create_po_post():
                 VALUES (%s, 'item', %s, %s, %s, %s, %s)
             """, (po_id, item_ids[i], '', item_quantities[i], item_prices[i], total))
     
-    # Add products
     product_ids = request.form.getlist('product_id')
     product_quantities = request.form.getlist('product_quantity')
     product_prices = request.form.getlist('product_price')
@@ -2215,7 +2145,6 @@ def receive_material_post():
             """, (po_id, po_number, supplier_id, supplier_name, receive_date, item_types[i],
                   item_ids[i], item_names[i], quantities[i], prices[i], total, session['username']))
             
-            # Update stock
             if item_types[i] == 'item':
                 cursor.execute("UPDATE tbl_item SET quantity = quantity + %s WHERE item_id = %s",
                               (quantities[i], item_ids[i]))
@@ -2223,7 +2152,6 @@ def receive_material_post():
                 cursor.execute("UPDATE tbl_product SET quantity = quantity + %s WHERE product_id = %s",
                               (quantities[i], item_ids[i]))
             
-            # Update PO item received quantity
             cursor.execute("""
                 UPDATE tbl_purchase_order_item SET received_quantity = received_quantity + %s
                 WHERE po_id = %s AND item_id = %s AND item_type = %s
@@ -2249,7 +2177,6 @@ def delete_po(po_id):
     cursor.close()
     conn.close()
     return redirect(url_for('purchase_orders'))
-
 
 # ============ QUOTATIONS MODULE ============
 
@@ -2284,186 +2211,6 @@ def create_quotation_form():
                          customers=customers, items=items, products=products, now=date.today(),
                          active_page='quotations')
 
-@app.route('/quotations/view/<int:quote_id>')
-def view_quotation(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('view_quotation.html', username=session['username'], role=session['user'],
-                         quote=quote, items=items, active_page='quotations')
-
-@app.route('/quotations/edit/<int:quote_id>', methods=['GET'])
-def edit_quotation_form(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    cursor.execute("SELECT customer_id, customer_name, email, phone FROM tbl_customer")
-    customers = cursor.fetchall()
-    cursor.execute("SELECT item_id, item_name, quantity, purchase_price FROM tbl_item")
-    all_items = cursor.fetchall()
-    cursor.execute("SELECT product_id, product_name, quantity, purchase_price FROM tbl_product")
-    all_products = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('edit_quotation.html', username=session['username'], role=session['user'],
-                         quote=quote, items=items, customers=customers, all_items=all_items,
-                         all_products=all_products, active_page='quotations')
-
-@app.route('/quotations/edit/<int:quote_id>', methods=['POST'])
-def edit_quotation_post(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        UPDATE tbl_quotation SET customer_id = %s, customer_name = %s, customer_email = %s, customer_phone = %s,
-        quote_date = %s, expiry_date = %s, subtotal = %s, tax_rate = %s, tax_amount = %s,
-        discount_amount = %s, total_amount = %s, notes = %s, terms_conditions = %s, status = %s
-        WHERE quote_id = %s
-    """, (request.form['customer_id'] or None, request.form['customer_name'], request.form['customer_email'],
-          request.form['customer_phone'], request.form['quote_date'], request.form['expiry_date'] or None,
-          request.form['subtotal'] or 0, request.form['tax_rate'] or 0, request.form['tax_amount'] or 0,
-          request.form['discount_amount'] or 0, request.form['total_amount'] or 0,
-          request.form['notes'], request.form['terms_conditions'], request.form['status'], quote_id))
-    
-    # Delete old items and insert new ones
-    cursor.execute("DELETE FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    
-    item_ids = request.form.getlist('item_id')
-    item_quantities = request.form.getlist('item_quantity')
-    item_prices = request.form.getlist('item_price')
-    
-    for i in range(len(item_ids)):
-        if item_ids[i] and item_quantities[i] and int(item_quantities[i]) > 0:
-            total = float(item_quantities[i]) * float(item_prices[i])
-            cursor.execute("""
-                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
-                VALUES (%s, 'item', %s, %s, %s, %s, %s)
-            """, (quote_id, item_ids[i], '', item_quantities[i], item_prices[i], total))
-    
-    product_ids = request.form.getlist('product_id')
-    product_quantities = request.form.getlist('product_quantity')
-    product_prices = request.form.getlist('product_price')
-    
-    for i in range(len(product_ids)):
-        if product_ids[i] and product_quantities[i] and int(product_quantities[i]) > 0:
-            total = float(product_quantities[i]) * float(product_prices[i])
-            cursor.execute("""
-                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
-                VALUES (%s, 'product', %s, %s, %s, %s, %s)
-            """, (quote_id, product_ids[i], '', product_quantities[i], product_prices[i], total))
-    
-    conn.commit()
-    log_audit('UPDATE', 'tbl_quotation', quote_id, None, {'status': request.form['status']})
-    cursor.close()
-    conn.close()
-    
-    return redirect(url_for('quotations'))
-
-@app.route('/quotations/update-status/<int:quote_id>', methods=['POST'])
-def update_quotation_status(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor()
-    new_status = request.form['status']
-    cursor.execute("UPDATE tbl_quotation SET status = %s WHERE quote_id = %s", (new_status, quote_id))
-    conn.commit()
-    log_audit('UPDATE', 'tbl_quotation', quote_id, None, {'status': new_status})
-    cursor.close()
-    conn.close()
-    return redirect(url_for('view_quotation', quote_id=quote_id))
-
-@app.route('/quotations/convert/<int:quote_id>')
-def convert_quote_to_jc(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    
-    # Get quotation
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    
-    # Create job card from quotation
-    cursor.execute("""
-        INSERT INTO tbl_service_jc (jc_type, customer_name, customer_id, amount, work_statement, created_by)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, ('Service', quote['customer_name'], quote['customer_id'], quote['total_amount'], 
-          f"Converted from Quotation #{quote['quote_number']}", session['username']))
-    
-    jc_id = cursor.lastrowid
-    
-    # Get quotation items
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    
-    for item in items:
-        cursor.execute("""
-            INSERT INTO tbl_service_jc_item (service_jc_id, item_id, product_id, item_name, product_name, item_quantity, product_quantity)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (jc_id, item['item_id'] if item['item_type'] == 'item' else None,
-              item['item_id'] if item['item_type'] == 'product' else None,
-              item['item_name'], item['item_name'], item['quantity'], item['quantity']))
-    
-    # Update quotation as converted
-    cursor.execute("UPDATE tbl_quotation SET status = 'converted', converted_jc_id = %s WHERE quote_id = %s",
-                  (jc_id, quote_id))
-    
-    conn.commit()
-    log_audit('CONVERT', 'tbl_quotation', quote_id, None, {'converted_jc_id': jc_id})
-    cursor.close()
-    conn.close()
-    
-    return redirect(url_for('view_job_card', jc_id=jc_id))
-
-@app.route('/quotations/delete/<int:quote_id>')
-def delete_quotation(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    cursor.execute("DELETE FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    conn.commit()
-    log_audit('DELETE', 'tbl_quotation', quote_id, None, None)
-    cursor.close()
-    conn.close()
-    return redirect(url_for('quotations'))
-
-@app.route('/pdf/quotation/<int:quote_id>')
-def pdf_quotation(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    rendered_html = render_template('pdf_quotation.html', quote=quote, items=items, date=date.today())
-    pdf_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-    pdfkit.from_string(rendered_html, pdf_file.name, configuration=config)
-    pdf_file.close()
-    return send_file(pdf_file.name, as_attachment=True, download_name=f'quotation_{quote["quote_number"]}.pdf')
-
-
 @app.route('/quotations/create', methods=['POST'])
 def create_quotation_post():
     if 'user_id' not in session:
@@ -2473,14 +2220,12 @@ def create_quotation_post():
     
     quote_number = f"QT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
-    # Get form data
     subtotal = float(request.form['subtotal'] or 0)
     tax_rate = float(request.form['tax_rate'] or 0)
     tax_amount = float(request.form['tax_amount'] or 0)
     discount_amount = float(request.form['discount_amount'] or 0)
     total_amount = float(request.form['total_amount'] or 0)
     
-    # Calculate cost price (sum of purchase prices of items)
     item_ids = request.form.getlist('item_id')
     item_quantities = request.form.getlist('item_quantity')
     product_ids = request.form.getlist('product_id')
@@ -2488,7 +2233,6 @@ def create_quotation_post():
     
     cost_price = 0
     
-    # Calculate item costs
     for i in range(len(item_ids)):
         if item_ids[i] and item_quantities[i] and int(item_quantities[i]) > 0:
             cursor.execute("SELECT purchase_price FROM tbl_item WHERE item_id = %s", (item_ids[i],))
@@ -2496,7 +2240,6 @@ def create_quotation_post():
             if item:
                 cost_price += float(item[0]) * int(item_quantities[i])
     
-    # Calculate product costs
     for i in range(len(product_ids)):
         if product_ids[i] and product_quantities[i] and int(product_quantities[i]) > 0:
             cursor.execute("SELECT purchase_price FROM tbl_product WHERE product_id = %s", (product_ids[i],))
@@ -2504,7 +2247,6 @@ def create_quotation_post():
             if product:
                 cost_price += float(product[0]) * int(product_quantities[i])
     
-    # Calculate profit and margin
     gross_profit = total_amount - cost_price
     margin_percentage = (gross_profit / total_amount * 100) if total_amount > 0 else 0
     
@@ -2521,7 +2263,6 @@ def create_quotation_post():
     
     quote_id = cursor.lastrowid
     
-    # Add items (same as before)
     for i in range(len(item_ids)):
         if item_ids[i] and item_quantities[i] and int(item_quantities[i]) > 0:
             cursor.execute("SELECT item_name, purchase_price FROM tbl_item WHERE item_id = %s", (item_ids[i],))
