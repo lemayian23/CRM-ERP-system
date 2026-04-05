@@ -4,7 +4,7 @@ import os
 import csv
 import json
 import tempfile
-import pdfkit
+# import pdfkit
 from io import BytesIO, StringIO
 from datetime import datetime, date, timedelta
 from openpyxl import Workbook
@@ -1920,9 +1920,9 @@ def view_daily_report(report_date):
 # ============ PDF GENERATION ============
 
 # Configure wkhtmltopdf path
-wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
-config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-
+# wkhtmltopdf_path = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'
+# config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+"""
 @app.route('/pdf/job-card/<int:jc_id>')
 def pdf_job_card(jc_id):
     if 'user_id' not in session:
@@ -1987,7 +1987,7 @@ def pdf_stock_report():
     pdfkit.from_string(rendered_html, pdf_file.name, configuration=config)
     pdf_file.close()
     return send_file(pdf_file.name, as_attachment=True, download_name='stock_report.pdf')
-
+"""
 # ============ AUDIT LOG ============
 
 @app.route('/audit-log')
