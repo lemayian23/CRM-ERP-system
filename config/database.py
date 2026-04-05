@@ -7,14 +7,15 @@ load_dotenv()
 def get_db():
     return mysql.connector.connect(
         host=os.getenv('DB_HOST'),
+        port=os.getenv('DB_PORT', 4000),
         user=os.getenv('DB_USER'),
         password=os.getenv('DB_PASSWORD'),
-        database=os.getenv('DB_NAME'),
-        charset='utf8mb4'
+        database=os.getenv('DB_NAME', 'test'),
+        use_pure=True,
+        ssl_ca=os.getenv('DB_SSL_CA')  # Path to CA certificate
     )
 
 def init_db():
-    """Create all tables if they don't exist"""
     conn = get_db()
     cursor = conn.cursor()
     

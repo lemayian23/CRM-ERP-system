@@ -138,7 +138,7 @@ def login_post():
     conn.close()
     if user:
         session['user_id'] = user['user_id']
-        session['user'] = user['user']
+        session['user'] = user['user_type']
         session['username'] = user['username']
         return redirect(url_for('dashboard'))
     else:
