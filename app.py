@@ -192,18 +192,33 @@ def create_job_card_form():
 def create_job_card_post():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    
     conn = get_db()
     cursor = conn.cursor()
+    
     cursor.execute("""
-        INSERT INTO tbl_service_jc (jc_type, customer_type, customer_name, customer_id, jc_create_date, amount, work_statement)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, (request.form['jc_type'], request.form['customer_type'], request.form['customer_name'],
-          request.form['customer_id'] or None, request.form['jc_create_date'], request.form['amount'], request.form['work_statement']))
+        INSERT INTO tbl_service_jc (jc_type, customer_type, customer_name, customer_id, 
+        jc_create_date, amount, work_statement, priority, estimated_hours, special_instructions)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (
+        request.form['jc_type'],
+        request.form['customer_type'],
+        request.form['customer_name'],
+        request.form['customer_id'] or None,
+        request.form['jc_create_date'],
+        request.form['amount'],
+        request.form.get('work_statement', ''),
+        request.form.get('priority', 'Normal'),
+        request.form.get('estimated_hours') or None,
+        request.form.get('special_instructions', '')
+    ))
+    
     jc_id = cursor.lastrowid
     conn.commit()
     log_audit('CREATE', 'tbl_service_jc', jc_id, None, {'customer_name': request.form['customer_name'], 'amount': request.form['amount']})
     cursor.close()
     conn.close()
+    
     return redirect(url_for('job_cards'))
 
 @app.route('/job-cards/<int:jc_id>')

@@ -37,6 +37,7 @@
                         <th>Status</th>
                         <th>Payment</th>
                         <th>Actions</th>
+                        <th>Priority</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,6 +53,19 @@
                                 <span class="badge bg-success">Closed</span>
                             {% else %}
                                 <span class="badge bg-warning">Open</span>
+                            {% endif %}
+                        </td>
+
+
+                        <td>
+                            {% if jc.priority == 'Urgent' %}
+                                <span class="badge bg-danger">Urgent</span>
+                            {% elif jc.priority == 'High' %}
+                                <span class="badge bg-warning">High</span>
+                            {% elif jc.priority == 'Low' %}
+                                <span class="badge bg-info">Low</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Normal</span>
                             {% endif %}
                         </td>
                         <td>
