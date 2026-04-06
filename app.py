@@ -2296,60 +2296,36 @@ def create_quotation_post():
     return redirect(url_for('quotations'))
 
 
-# ============ PDF GENERATION WITH HTML2PDF ============
+# ============ PDF GENERATION WITH APITEMPLATE.IO ============
 
 import requests
 from io import BytesIO
 
-HTML2PDF_API_KEY = os.getenv('HTML2PDF_API_KEY')
-HTML2PDF_URL = 'https://api.html2pdf.app/v1/generate'
+APITEMPLATE_API_KEY = os.getenv('APITEMPLATE_API_KEY')
+APITEMPLATE_URL = 'https://api.apitemplate.io/v1/create-pdf'
 
 def generate_pdf(html_content):
-    """Generate PDF using HTML2PDF API"""
-    if not HTML2PDF_API_KEY:
-        raise Exception("HTML2PDF_API_KEY environment variable not set")
+    """Generate PDF using Apitemplate.io API"""
+    if not APITEMPLATE_API_KEY:
+        raise Exception("APITEMPLATE_API_KEY environment variable not set")
     
-    response = requests.post(
-        HTML2PDF_URL,
-        params={'apiKey': HTML2PDF_API_KEY},
-        data=html_content.encode('utf-8'),
-        headers={'Content-Type': 'text/html'}
-    )
+    headers = {
+        "X-API-KEY": APITEMPLATE_API_KEY,
+        "Content-Type": "application/json"
+    }
+    
+    data = {
+        "html": html_content,
+        "page_size": "A4",
+        "orientation": "portrait"
+    }
+    
+    response = requests.post(APITEMPLATE_URL, json=data, headers=headers, timeout=60)
     
     if response.status_code == 200:
         return response.content
     else:
         raise Exception(f"PDF generation failed: {response.text}")
-
-@app.route('/pdf/job-card/<int:jc_id>')
-def pdf_job_card(jc_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_service_jc WHERE id = %s", (jc_id,))
-    job_card = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_mpesa_number")
-    mpesa_numbers = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    rendered_html = render_template('pdf_job_card.html', 
-                                   job_card=job_card, 
-                                   mpesa_numbers=mpesa_numbers,
-                                   date=date.today())
-    
-    try:
-        pdf_content = generate_pdf(rendered_html)
-        return send_file(
-            BytesIO(pdf_content),
-            as_attachment=True,
-            download_name=f'job_card_{jc_id}.pdf',
-            mimetype='application/pdf'
-        )
-    except Exception as e:
-        return f"PDF generation error: {str(e)}", 500
 
 
 
