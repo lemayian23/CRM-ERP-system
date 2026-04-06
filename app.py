@@ -2377,6 +2377,89 @@ def pdf_job_card(jc_id):
     except Exception as e:
         return f"PDF generation error: {str(e)}", 500
 
+@app.route('/pdf/financial-report')
+def pdf_financial_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get financial summary
+    cursor.execute("""
+        SELECT 
+            COALESCE(SUM(CASE WHEN paid = 'Paid' THEN total_paid_amount ELSE amount END), 0) as total_revenue,
+            COALESCE(SUM(CASE WHEN paid != 'Paid' AND jc_closed = 'Closed' THEN amount ELSE 0 END), 0) as pending_amount,
+            COUNT(CASE WHEN paid = 'Paid' THEN 1 END) as paid_count,
+            COUNT(*) as total_jobs,
+            COUNT(CASE WHEN paid != 'Paid' AND jc_closed = 'Closed' THEN 1 END) as pending_count
+        FROM tbl_service_jc
+    """)
+    summary = cursor.fetchone()
+    
+    # Get recent payments
+    cursor.execute("SELECT * FROM tbl_service_jc ORDER BY created_at DESC LIMIT 50")
+    payments = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_financial_report.html', 
+                                   summary=summary, 
+                                   payments=payments,
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name='financial_report.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
+
+@app.route('/pdf/stock-report')
+def pdf_stock_report():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    # Get inventory data
+    cursor.execute("SELECT * FROM tbl_item ORDER BY item_name")
+    items = cursor.fetchall()
+    cursor.execute("SELECT * FROM tbl_product ORDER BY product_name")
+    products = cursor.fetchall()
+    
+    # Calculate totals
+    cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_item")
+    items_total = cursor.fetchone()
+    cursor.execute("SELECT COALESCE(SUM(quantity * purchase_price), 0) as total FROM tbl_product")
+    products_total = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_stock_report.html', 
+                                   items=items, 
+                                   products=products,
+                                   items_total=items_total['total'],
+                                   products_total=products_total['total'],
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name='stock_report.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
+
 # For Render.com compatibility
 port = int(os.environ.get('PORT', 5000))
 
