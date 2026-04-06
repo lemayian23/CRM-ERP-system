@@ -10,6 +10,123 @@ from datetime import datetime, date, timedelta
 from openpyxl import Workbook
 from config.database import get_db
 
+import requests
+import json
+
+# ============ PDF GENERATION WITH PDFSHIFT ============
+from io import BytesIO
+
+PDFSHIFT_API_KEY = os.getenv('sk_558f9bfc15785c106936d971266acd886ba4768b')
+PDFSHIFT_URL = 'https://api.pdfshift.io/v3/convert/pdf'
+
+def generate_pdf(html_content):
+    """Generate PDF using PDFShift API"""
+    if not PDFSHIFT_API_KEY:
+        raise Exception("PDFSHIFT_API_KEY environment variable not set")
+    
+    response = requests.post(
+        PDFSHIFT_URL,
+        auth=(PDFSHIFT_API_KEY, ''),
+        json={'source': html_content},
+        headers={'Content-Type': 'application/json'}
+    )
+    
+    if response.status_code == 200:
+        return response.content
+    else:
+        raise Exception(f"PDF generation failed: {response.text}")
+
+@app.route('/pdf/job-card/<int:jc_id>')
+def pdf_job_card(jc_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_service_jc WHERE id = %s", (jc_id,))
+    job_card = cursor.fetchone()
+    cursor.execute("SELECT * FROM tbl_mpesa_number")
+    mpesa_numbers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_job_card.html', 
+                                   job_card=job_card, 
+                                   mpesa_numbers=mpesa_numbers,
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name=f'job_card_{jc_id}.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
+
+@app.route('/pdf/quotation/<int:quote_id>')
+def pdf_quotation(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
+    quote = cursor.fetchone()
+    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_quotation.html', 
+                                   quote=quote, 
+                                   items=items,
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name=f'quotation_{quote["quote_number"]}.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
+
+@app.route('/pdf/invoice/<int:jc_id>')
+def pdf_invoice(jc_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_service_jc WHERE id = %s", (jc_id,))
+    job_card = cursor.fetchone()
+    cursor.execute("SELECT * FROM tbl_service_jc_item WHERE service_jc_id = %s", (jc_id,))
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_invoice.html', 
+                                   job_card=job_card, 
+                                   items=items,
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name=f'invoice_{jc_id}.pdf',
+            mimetype='application/pdf'
+        )
+        return send_file(pdf_path, as_attachment=True, download_name=f'invoice_{jc_id}.pdf')
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
+
 load_dotenv()
 
 app = Flask(__name__)
