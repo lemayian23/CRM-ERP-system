@@ -2296,16 +2296,21 @@ def create_quotation_post():
     return redirect(url_for('quotations'))
 
 
+
+
+import os
+
 # ============ PDF GENERATION WITH APITEMPLATE.IO ============
 
 import requests
 from io import BytesIO
 
+# Apitemplate.io configuration - get from environment variable
 APITEMPLATE_API_KEY = os.getenv('APITEMPLATE_API_KEY')
-APITEMPLATE_URL = 'https://api.apitemplate.io/v1/create-pdf'
+APITEMPLATE_URL = 'https://rest.apitemplate.io/v2/create-pdf-from-html'
 
 def generate_pdf(html_content):
-    """Generate PDF using Apitemplate.io API"""
+    """Generate PDF using Apitemplate.io API - CORRECT ENDPOINT"""
     if not APITEMPLATE_API_KEY:
         raise Exception("APITEMPLATE_API_KEY environment variable not set")
     
@@ -2314,22 +2319,63 @@ def generate_pdf(html_content):
         "Content-Type": "application/json"
     }
     
+    # Use the correct API endpoint and parameters [citation:5]
     data = {
-        "html": html_content,
-        "page_size": "A4",
-        "orientation": "portrait"
+        "body": html_content,
+        "settings": {
+            "paper_size": "A4",
+            "orientation": "Portrait"
+        }
     }
     
-    response = requests.post(APITEMPLATE_URL, json=data, headers=headers, timeout=60)
+    response = requests.post(
+        APITEMPLATE_URL,
+        json=data,
+        headers=headers,
+        timeout=60
+    )
     
     if response.status_code == 200:
-        return response.content
+        result = response.json()
+        # The API returns a download_url [citation:5]
+        if 'download_url' in result:
+            # Download the PDF from the URL
+            pdf_response = requests.get(result['download_url'])
+            return pdf_response.content
+        else:
+            return response.content
     else:
         raise Exception(f"PDF generation failed: {response.text}")
 
-
-
-import os
+@app.route('/pdf/job-card/<int:jc_id>')
+def pdf_job_card(jc_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_service_jc WHERE id = %s", (jc_id,))
+    job_card = cursor.fetchone()
+    cursor.execute("SELECT * FROM tbl_mpesa_number")
+    mpesa_numbers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_job_card.html', 
+                                   job_card=job_card, 
+                                   mpesa_numbers=mpesa_numbers,
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name=f'job_card_{jc_id}.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
 
 # For Render.com compatibility
 port = int(os.environ.get('PORT', 5000))
