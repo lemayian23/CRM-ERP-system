@@ -13,6 +13,8 @@ from config.database import get_db
 import requests
 from io import BytesIO
 
+from flask import jsonify
+
 
 
 load_dotenv()
@@ -367,7 +369,36 @@ def payment_job_card_post(jc_id):
     conn.close()
     return redirect(url_for('job_cards'))
 
+
+
+@app.route('/api/search-customers')
+def api_search_customers():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    search_term = request.args.get('q', '')
+    if len(search_term) < 2:
+        return jsonify({'customers': []})
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT customer_id, customer_name, customer_type 
+        FROM tbl_customer 
+        WHERE customer_name LIKE %s 
+        ORDER BY customer_name 
+        LIMIT 10
+    """, (f'%{search_term}%',))
+    customers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    return jsonify({'customers': customers})
+
 # ============ CUSTOMERS ============
+
+
+
 
 @app.route('/customers')
 def customers():
