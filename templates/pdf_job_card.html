@@ -4,131 +4,250 @@
     <meta charset="UTF-8">
     <title>Job Card #{{ job_card.id }}</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             font-size: 12px;
-            margin: 0;
+            line-height: 1.4;
+            color: #333;
             padding: 20px;
         }
         .header {
             text-align: center;
-            border-bottom: 2px solid #0066cc;
+            border-bottom: 3px solid #0066cc;
             padding-bottom: 10px;
             margin-bottom: 20px;
         }
         .header h1 {
             color: #0066cc;
-            margin: 0;
+            font-size: 24px;
+            margin-bottom: 5px;
         }
         .header p {
-            margin: 5px 0;
             color: #666;
+            font-size: 11px;
+        }
+        .title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #0066cc;
         }
         .section {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             border: 1px solid #ddd;
-            padding: 10px;
+            page-break-inside: avoid;
         }
         .section-title {
             background-color: #0066cc;
             color: white;
-            padding: 5px 10px;
-            margin: -10px -10px 10px -10px;
+            padding: 6px 12px;
             font-weight: bold;
+            font-size: 13px;
+        }
+        .section-content {
+            padding: 12px;
         }
         .row {
             margin-bottom: 8px;
+            display: flex;
         }
         .label {
             font-weight: bold;
-            display: inline-block;
-            width: 150px;
+            width: 140px;
+            color: #555;
         }
         .value {
-            display: inline-block;
+            flex: 1;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
+            margin-top: 10px;
         }
         th, td {
+            border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .mpesa-box {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 12px;
+            margin-top: 15px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .mpesa-number {
+            font-size: 14px;
+            font-weight: bold;
+            color: #0066cc;
+            margin: 5px 0;
         }
         .footer {
             margin-top: 30px;
             text-align: center;
             font-size: 10px;
-            color: #666;
+            color: #999;
             border-top: 1px solid #ddd;
             padding-top: 10px;
         }
-        .mpesa-box {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-top: 15px;
-            text-align: center;
+        .signature {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
         }
-        .mpesa-number {
-            font-size: 16px;
-            font-weight: bold;
-            color: #0066cc;
+        .signature-line {
+            width: 200px;
+            text-align: center;
+            border-top: 1px solid #333;
+            padding-top: 5px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>AQUASHINE CRM</h1>
-        <p>Job Card #{{ job_card.id }} | {{ job_card.jc_number or 'N/A' }}</p>
-        <p>Generated: {{ date.strftime('%Y-%m-%d %H:%M:%S') if date else '' }}</p>
+        <h1>AQUASHINE SERVICES</h1>
+        <p>Water Solutions Provider | Tel: +254 XXX XXX XXX | Email: info@aquashine.com</p>
+    </div>
+
+    <div class="title">JOB CARD</div>
+
+    <div class="section">
+        <div class="section-title">Job Card Information</div>
+        <div class="section-content">
+            <div class="row">
+                <div class="label">Job Card No:</div>
+                <div class="value">{{ job_card.jc_number or 'N/A' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">JC Type:</div>
+                <div class="value">{{ job_card.jc_type or 'Service' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Created Date:</div>
+                <div class="value">{{ job_card.jc_create_date or job_card.created_at.strftime('%Y-%m-%d') if job_card.created_at else '-' }}</div>
+            </div>
+        </div>
     </div>
 
     <div class="section">
         <div class="section-title">Customer Information</div>
-        <div class="row"><span class="label">Customer Name:</span> <span class="value">{{ job_card.customer_name }}</span></div>
-        <div class="row"><span class="label">Customer Type:</span> <span class="value">{{ job_card.customer_type or '-' }}</span></div>
+        <div class="section-content">
+            <div class="row">
+                <div class="label">Customer Name:</div>
+                <div class="value">{{ job_card.customer_name }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Customer Type:</div>
+                <div class="value">{{ job_card.customer_type or '-' }}</div>
+            </div>
+        </div>
     </div>
 
     <div class="section">
-        <div class="section-title">Job Details</div>
-        <div class="row"><span class="label">JC Type:</span> <span class="value">{{ job_card.jc_type or '-' }}</span></div>
-        <div class="row"><span class="label">Amount:</span> <span class="value">KES {{ "{:,.2f}".format(job_card.amount or 0) }}</span></div>
-        <div class="row"><span class="label">Work Statement:</span> <span class="value">{{ job_card.work_statement or '-' }}</span></div>
-        <div class="row"><span class="label">Assigned To:</span> <span class="value">{{ job_card.jc_assigned_to or 'Unassigned' }}</span></div>
-        <div class="row"><span class="label">Proposed Date:</span> <span class="value">{{ job_card.proposed_work_date or '-' }}</span></div>
+        <div class="section-title">Technician Assignment</div>
+        <div class="section-content">
+            <div class="row">
+                <div class="label">Assigned To:</div>
+                <div class="value">{{ job_card.jc_assigned_to or 'Not Assigned' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Proposed Date:</div>
+                <div class="value">{{ job_card.proposed_work_date or '-' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Time Slot:</div>
+                <div class="value">{{ job_card.time_slot or '-' }}</div>
+            </div>
+        </div>
     </div>
 
     <div class="section">
-        <div class="section-title">Payment Information</div>
-        <div class="row"><span class="label">Status:</span> <span class="value">{% if job_card.jc_closed == 'Closed' %}Closed{% else %}Open{% endif %}</span></div>
-        <div class="row"><span class="label">Payment:</span> <span class="value">{% if job_card.paid == 'Paid' %}Paid{% else %}Pending{% endif %}</span></div>
-        {% if job_card.paid == 'Paid' %}
-        <div class="row"><span class="label">Payment Type:</span> <span class="value">{{ job_card.payment_type or '-' }}</span></div>
-        <div class="row"><span class="label">Payment Code:</span> <span class="value">{{ job_card.payment_code or '-' }}</span></div>
-        <div class="row"><span class="label">Payment Date:</span> <span class="value">{{ job_card.payment_date or '-' }}</span></div>
-        {% endif %}
+        <div class="section-title">Work Details</div>
+        <div class="section-content">
+            <div class="row">
+                <div class="label">Work Statement:</div>
+                <div class="value">{{ job_card.work_statement or '-' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Job Finding:</div>
+                <div class="value">{{ job_card.job_finding or '-' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Work Done Date:</div>
+                <div class="value">{{ job_card.work_done_date or '-' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Hours Worked:</div>
+                <div class="value">{{ job_card.hours or '-' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Financial Information</div>
+        <div class="section-content">
+            <div class="row">
+                <div class="label">Amount (KES):</div>
+                <div class="value">{{ "{:,.2f}".format(job_card.amount or 0) }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Payment Status:</div>
+                <div class="value">
+                    {% if job_card.paid == 'Paid' %}
+                        <span style="color: green;">Paid</span>
+                    {% else %}
+                        <span style="color: red;">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if job_card.paid == 'Paid' %}
+            <div class="row">
+                <div class="label">Payment Type:</div>
+                <div class="value">{{ job_card.payment_type or '-' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Payment Code:</div>
+                <div class="value">{{ job_card.payment_code or '-' }}</div>
+            </div>
+            <div class="row">
+                <div class="label">Payment Date:</div>
+                <div class="value">{{ job_card.payment_date or '-' }}</div>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     {% if mpesa_numbers %}
     <div class="mpesa-box">
-        <strong>M-PESA Payment Numbers:</strong><br>
+        <strong>M-PESA PAYMENT NUMBERS</strong>
         {% for m in mpesa_numbers %}
         <div class="mpesa-number">{{ m.name }}: {{ m.number }}</div>
         {% endfor %}
-        <small>Use the above numbers to make payment. Enter transaction code as payment reference.</small>
+        <small>Enter transaction code as payment reference</small>
     </div>
     {% endif %}
 
+    <div class="signature">
+        <div class="signature-line">Customer Signature</div>
+        <div class="signature-line">Technician Signature</div>
+    </div>
+
     <div class="footer">
         <p>Thank you for choosing Aquashine Services</p>
-        <p>For inquiries, call: +254 XXX XXX XXX</p>
+        <p>Generated on {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
     </div>
 </body>
 </html>

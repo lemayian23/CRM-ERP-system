@@ -4,76 +4,168 @@
     <meta charset="UTF-8">
     <title>Quotation {{ quote.quote_number }}</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; padding: 20px; }
-        .header { text-align: center; border-bottom: 2px solid #0066cc; padding-bottom: 10px; margin-bottom: 20px; }
-        .header h1 { color: #0066cc; margin: 0; }
-        .company-info { text-align: center; margin-bottom: 20px; }
-        .quote-title { font-size: 18px; font-weight: bold; text-align: center; margin: 20px 0; }
-        .info-box { margin-bottom: 20px; }
-        .info-box table { width: 100%; }
-        .info-box td { padding: 5px; }
-        table.items { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        table.items th, table.items td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        table.items th { background-color: #f2f2f2; }
-        .text-end { text-align: right; }
-        .text-center { text-align: center; }
-        .totals { width: 300px; float: right; margin-top: 20px; }
-        .totals table { width: 100%; }
-        .totals td { padding: 5px; }
-        .footer { margin-top: 50px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
-        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 5px; color: white; }
-        .status-draft { background-color: #6c757d; }
-        .status-approved { background-color: #28a745; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #0066cc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #0066cc;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #0066cc;
+        }
+        .info-box {
+            margin-bottom: 20px;
+        }
+        .info-table {
+            width: 100%;
+            border: none;
+        }
+        .info-table td {
+            padding: 5px;
+            border: none;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .items-table th, .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .items-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .totals {
+            width: 300px;
+            float: right;
+            margin-top: 15px;
+        }
+        .totals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .totals-table td {
+            padding: 5px;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            clear: both;
+        }
+        .valid-until {
+            color: #ff6600;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>AQUASHINE CRM</h1>
-        <p>Water Solutions Provider</p>
-        <p>Tel: +254 XXX XXX XXX | Email: info@aquashine.com</p>
+        <h1>AQUASHINE SERVICES</h1>
+        <p>Water Solutions Provider | Tel: +254 XXX XXX XXX | Email: info@aquashine.com</p>
     </div>
 
-    <div class="quote-title">
-        QUOTATION
-        <div style="font-size: 14px; margin-top: 5px;">{{ quote.quote_number }}</div>
-    </div>
+    <div class="title">QUOTATION</div>
 
     <div class="info-box">
-        <table>
-            <tr><td width="50%"><strong>Bill To:</strong><br>{{ quote.customer_name }}<br>{% if quote.customer_email %}Email: {{ quote.customer_email }}<br>{% endif %}{% if quote.customer_phone %}Phone: {{ quote.customer_phone }}{% endif %}</td>
-                <td><strong>Quote Date:</strong> {{ quote.quote_date }}<br><strong>Expiry Date:</strong> {{ quote.expiry_date or 'N/A' }}<br><strong>Status:</strong> {{ quote.status|upper }}</td></tr>
+        <table class="info-table">
+            <tr>
+                <td width="50%">
+                    <strong>Bill To:</strong><br>
+                    {{ quote.customer_name }}<br>
+                    {% if quote.customer_email %}Email: {{ quote.customer_email }}<br>{% endif %}
+                    {% if quote.customer_phone %}Phone: {{ quote.customer_phone }}{% endif %}
+                </td>
+                <td width="50%">
+                    <strong>Quote Details:</strong><br>
+                    Quote No: {{ quote.quote_number }}<br>
+                    Date: {{ quote.quote_date }}<br>
+                    Valid Until: <span class="valid-until">{{ quote.expiry_date or '30 days from date' }}</span>
+                </td>
+            </tr>
         </table>
     </div>
 
-    <table class="items">
-        <thead><tr><th>#</th><th>Item/Product</th><th class="text-center">Qty</th><th class="text-end">Unit Price (KES)</th><th class="text-end">Total (KES)</th></tr></thead>
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Item/Product Description</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Unit Price (KES)</th>
+                <th class="text-right">Total (KES)</th>
+            </tr>
+        </thead>
         <tbody>
             {% for item in items %}
-            <tr><td>{{ loop.index }}</td><td>{{ item.item_name }}</td><td class="text-center">{{ item.quantity }}</td><td class="text-end">{{ "{:,.2f}".format(item.unit_price or 0) }}</td><td class="text-end">{{ "{:,.2f}".format(item.total_price or 0) }}</td></tr>
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ item.item_name }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(item.unit_price or 0) }}</td>
+                <td class="text-right">{{ "{:,.2f}".format(item.total_price or 0) }}</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <div class="totals">
-        <table><tr><td>Subtotal:</td><td class="text-end">KES {{ "{:,.2f}".format(quote.subtotal or 0) }}</td></tr>
-        <tr><td>Tax ({{ quote.tax_rate or 0 }}%):</td><td class="text-end">KES {{ "{:,.2f}".format(quote.tax_amount or 0) }}</td></tr>
-        <tr><td>Discount:</td><td class="text-end">KES {{ "{:,.2f}".format(quote.discount_amount or 0) }}</td></tr>
-        <tr style="font-weight: bold; border-top: 1px solid #ddd;"><td>Total:</td><td class="text-end">KES {{ "{:,.2f}".format(quote.total_amount or 0) }}</td></tr>
+        <table class="totals-table">
+            <tr><td><strong>Subtotal:</strong></td><td class="text-right">KES {{ "{:,.2f}".format(quote.subtotal or 0) }}</td></tr>
+            <tr><td><strong>Tax ({{ quote.tax_rate or 0 }}%):</strong></td><td class="text-right">KES {{ "{:,.2f}".format(quote.tax_amount or 0) }}</td></tr>
+            <tr><td><strong>Discount:</strong></td><td class="text-right">KES {{ "{:,.2f}".format(quote.discount_amount or 0) }}</td></tr>
+            <tr style="border-top: 2px solid #333;"><td><strong>GRAND TOTAL:</strong></td><td class="text-right"><strong>KES {{ "{:,.2f}".format(quote.total_amount or 0) }}</strong></td></tr>
+            <tr><td><strong>Cost Price:</strong></td><td class="text-right">KES {{ "{:,.2f}".format(quote.cost_price or 0) }}</td></tr>
+            <tr><td><strong>Gross Profit:</strong></td><td class="text-right">KES {{ "{:,.2f}".format(quote.gross_profit or 0) }}</td></tr>
+            <tr><td><strong>Margin:</strong></td><td class="text-right">{{ "{:.1f}".format(quote.margin_percentage or 0) }}%</td></tr>
         </table>
     </div>
 
     <div style="clear: both;"></div>
 
     {% if quote.notes %}
-    <div style="margin-top: 30px;"><strong>Notes:</strong><br>{{ quote.notes }}</div>
+    <div style="margin-top: 20px;">
+        <strong>Notes:</strong><br>
+        {{ quote.notes }}
+    </div>
     {% endif %}
+
     {% if quote.terms_conditions %}
-    <div style="margin-top: 20px;"><strong>Terms & Conditions:</strong><br>{{ quote.terms_conditions }}</div>
+    <div style="margin-top: 15px;">
+        <strong>Terms & Conditions:</strong><br>
+        {{ quote.terms_conditions }}
+    </div>
     {% endif %}
 
     <div class="footer">
         <p>This is a computer-generated quotation. No signature required.</p>
         <p>Thank you for choosing Aquashine Services</p>
+        <p>Generated on {{ date.strftime('%Y-%m-%d %H:%M:%S') }}</p>
     </div>
 </body>
 </html>
