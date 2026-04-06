@@ -2296,25 +2296,24 @@ def create_quotation_post():
     return redirect(url_for('quotations'))
 
 
-# ============ PDF GENERATION WITH PDFSHIFT ============
+# ============ PDF GENERATION WITH HTML2PDF ============
 
 import requests
 from io import BytesIO
 
-# PDFShift API configuration - get from environment variable
-PDFSHIFT_API_KEY = os.getenv('PDFSHIFT_API_KEY')
-PDFSHIFT_URL = 'https://api.pdfshift.io/v3/convert/pdf'
+HTML2PDF_API_KEY = os.getenv('HTML2PDF_API_KEY')
+HTML2PDF_URL = 'https://api.html2pdf.app/v1/generate'
 
 def generate_pdf(html_content):
-    """Generate PDF using PDFShift API"""
-    if not PDFSHIFT_API_KEY:
-        raise Exception("PDFSHIFT_API_KEY environment variable not set")
+    """Generate PDF using HTML2PDF API"""
+    if not HTML2PDF_API_KEY:
+        raise Exception("HTML2PDF_API_KEY environment variable not set")
     
     response = requests.post(
-        PDFSHIFT_URL,
-        auth=(PDFSHIFT_API_KEY, ''),
-        json={'source': html_content},
-        headers={'Content-Type': 'application/json'}
+        HTML2PDF_URL,
+        params={'apiKey': HTML2PDF_API_KEY},
+        data=html_content.encode('utf-8'),
+        headers={'Content-Type': 'text/html'}
     )
     
     if response.status_code == 200:
@@ -2347,68 +2346,6 @@ def pdf_job_card(jc_id):
             BytesIO(pdf_content),
             as_attachment=True,
             download_name=f'job_card_{jc_id}.pdf',
-            mimetype='application/pdf'
-        )
-    except Exception as e:
-        return f"PDF generation error: {str(e)}", 500
-
-@app.route('/pdf/quotation/<int:quote_id>')
-def pdf_quotation(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    if not quote:
-        return "Quotation not found", 404
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    rendered_html = render_template('pdf_quotation.html', 
-                                   quote=quote, 
-                                   items=items,
-                                   date=date.today())
-    
-    try:
-        pdf_content = generate_pdf(rendered_html)
-        return send_file(
-            BytesIO(pdf_content),
-            as_attachment=True,
-            download_name=f'quotation_{quote["quote_number"]}.pdf',
-            mimetype='application/pdf'
-        )
-    except Exception as e:
-        return f"PDF generation error: {str(e)}", 500
-
-@app.route('/pdf/invoice/<int:jc_id>')
-def pdf_invoice(jc_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_service_jc WHERE id = %s", (jc_id,))
-    job_card = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_service_jc_item WHERE service_jc_id = %s", (jc_id,))
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    rendered_html = render_template('pdf_invoice.html', 
-                                   job_card=job_card, 
-                                   items=items,
-                                   date=date.today())
-    
-    try:
-        pdf_content = generate_pdf(rendered_html)
-        return send_file(
-            BytesIO(pdf_content),
-            as_attachment=True,
-            download_name=f'invoice_{jc_id}.pdf',
             mimetype='application/pdf'
         )
     except Exception as e:
