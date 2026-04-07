@@ -2238,260 +2238,6 @@ def delete_po(po_id):
     conn.close()
     return redirect(url_for('purchase_orders'))
 
-# ============ QUOTATIONS MODULE - COMPLETE ROUTES ============
-
-@app.route('/quotations')
-def quotations():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation ORDER BY quote_id DESC")
-    quotations = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('quotations.html', username=session['username'], role=session['user'],
-                         quotations=quotations, active_page='quotations')
-
-@app.route('/quotations/create', methods=['GET'])
-def create_quotation_form():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT customer_id, customer_name, email, phone FROM tbl_customer")
-    customers = cursor.fetchall()
-    cursor.execute("SELECT item_id, item_name, quantity, purchase_price FROM tbl_item")
-    items = cursor.fetchall()
-    cursor.execute("SELECT product_id, product_name, quantity, purchase_price FROM tbl_product")
-    products = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('create_quotation.html', username=session['username'], role=session['user'],
-                         customers=customers, items=items, products=products, now=date.today(),
-                         active_page='quotations')
-
-@app.route('/quotations/create', methods=['POST'])
-def create_quotation_post():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    quote_number = f"QT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    
-    subtotal = float(request.form.get('subtotal', 0))
-    tax_rate = float(request.form.get('tax_rate', 0))
-    tax_amount = float(request.form.get('tax_amount', 0))
-    discount_amount = float(request.form.get('discount_amount', 0))
-    total_amount = float(request.form.get('total_amount', 0))
-    
-    cursor.execute("""
-        INSERT INTO tbl_quotation (quote_number, customer_id, customer_name, customer_email, customer_phone,
-        quote_date, expiry_date, subtotal, tax_rate, tax_amount, discount_amount, total_amount, 
-        notes, terms_conditions, status, created_by)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (quote_number, request.form.get('customer_id') or None, request.form.get('customer_name'),
-          request.form.get('customer_email'), request.form.get('customer_phone'), 
-          request.form.get('quote_date'), request.form.get('expiry_date') or None,
-          subtotal, tax_rate, tax_amount, discount_amount, total_amount,
-          request.form.get('notes'), request.form.get('terms_conditions'), 'draft', session['username']))
-    
-    quote_id = cursor.lastrowid
-    
-    # Add items
-    item_ids = request.form.getlist('item_id')
-    item_quantities = request.form.getlist('item_quantity')
-    item_prices = request.form.getlist('item_price')
-    
-    for i in range(len(item_ids)):
-        if item_ids[i] and item_quantities[i] and int(item_quantities[i]) > 0:
-            total = float(item_quantities[i]) * float(item_prices[i])
-            cursor.execute("""
-                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
-                VALUES (%s, 'item', %s, %s, %s, %s, %s)
-            """, (quote_id, item_ids[i], '', item_quantities[i], item_prices[i], total))
-    
-    # Add products
-    product_ids = request.form.getlist('product_id')
-    product_quantities = request.form.getlist('product_quantity')
-    product_prices = request.form.getlist('product_price')
-    
-    for i in range(len(product_ids)):
-        if product_ids[i] and product_quantities[i] and int(product_quantities[i]) > 0:
-            total = float(product_quantities[i]) * float(product_prices[i])
-            cursor.execute("""
-                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
-                VALUES (%s, 'product', %s, %s, %s, %s, %s)
-            """, (quote_id, product_ids[i], '', product_quantities[i], product_prices[i], total))
-    
-    conn.commit()
-    log_audit('CREATE', 'tbl_quotation', quote_id, None, {'quote_number': quote_number})
-    cursor.close()
-    conn.close()
-    
-    return redirect(url_for('quotations'))
-
-@app.route('/quotations/view/<int:quote_id>')
-def view_quotation(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('view_quotation.html', username=session['username'], role=session['user'],
-                         quote=quote, items=items, active_page='quotations')
-
-@app.route('/quotations/edit/<int:quote_id>', methods=['GET'])
-def edit_quotation_form(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    cursor.execute("SELECT customer_id, customer_name, email, phone FROM tbl_customer")
-    customers = cursor.fetchall()
-    cursor.execute("SELECT item_id, item_name, quantity, purchase_price FROM tbl_item")
-    all_items = cursor.fetchall()
-    cursor.execute("SELECT product_id, product_name, quantity, purchase_price FROM tbl_product")
-    all_products = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('edit_quotation.html', username=session['username'], role=session['user'],
-                         quote=quote, items=items, customers=customers, all_items=all_items,
-                         all_products=all_products, active_page='quotations')
-
-@app.route('/quotations/edit/<int:quote_id>', methods=['POST'])
-def edit_quotation_post(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        UPDATE tbl_quotation SET customer_id = %s, customer_name = %s, customer_email = %s, customer_phone = %s,
-        quote_date = %s, expiry_date = %s, subtotal = %s, tax_rate = %s, tax_amount = %s,
-        discount_amount = %s, total_amount = %s, notes = %s, terms_conditions = %s, status = %s
-        WHERE quote_id = %s
-    """, (request.form.get('customer_id') or None, request.form.get('customer_name'),
-          request.form.get('customer_email'), request.form.get('customer_phone'),
-          request.form.get('quote_date'), request.form.get('expiry_date') or None,
-          request.form.get('subtotal', 0), request.form.get('tax_rate', 0), 
-          request.form.get('tax_amount', 0), request.form.get('discount_amount', 0),
-          request.form.get('total_amount', 0), request.form.get('notes'),
-          request.form.get('terms_conditions'), request.form.get('status'), quote_id))
-    
-    # Delete old items
-    cursor.execute("DELETE FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    
-    # Add new items
-    item_ids = request.form.getlist('item_id')
-    item_quantities = request.form.getlist('item_quantity')
-    item_prices = request.form.getlist('item_price')
-    
-    for i in range(len(item_ids)):
-        if item_ids[i] and item_quantities[i] and int(item_quantities[i]) > 0:
-            total = float(item_quantities[i]) * float(item_prices[i])
-            cursor.execute("""
-                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
-                VALUES (%s, 'item', %s, %s, %s, %s, %s)
-            """, (quote_id, item_ids[i], '', item_quantities[i], item_prices[i], total))
-    
-    product_ids = request.form.getlist('product_id')
-    product_quantities = request.form.getlist('product_quantity')
-    product_prices = request.form.getlist('product_price')
-    
-    for i in range(len(product_ids)):
-        if product_ids[i] and product_quantities[i] and int(product_quantities[i]) > 0:
-            total = float(product_quantities[i]) * float(product_prices[i])
-            cursor.execute("""
-                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
-                VALUES (%s, 'product', %s, %s, %s, %s, %s)
-            """, (quote_id, product_ids[i], '', product_quantities[i], product_prices[i], total))
-    
-    conn.commit()
-    log_audit('UPDATE', 'tbl_quotation', quote_id, None, {'status': request.form.get('status')})
-    cursor.close()
-    conn.close()
-    
-    return redirect(url_for('quotations'))
-
-@app.route('/quotations/delete/<int:quote_id>')
-def delete_quotation(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    cursor.execute("DELETE FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    conn.commit()
-    log_audit('DELETE', 'tbl_quotation', quote_id, None, None)
-    cursor.close()
-    conn.close()
-    return redirect(url_for('quotations'))
-
-@app.route('/quotations/convert/<int:quote_id>')
-def convert_quote_to_jc(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    
-    cursor.execute("""
-        INSERT INTO tbl_service_jc (jc_type, customer_name, customer_id, amount, work_statement, created_by)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, ('Service', quote['customer_name'], quote['customer_id'], quote['total_amount'], 
-          f"Converted from Quotation #{quote['quote_number']}", session['username']))
-    
-    jc_id = cursor.lastrowid
-    
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    
-    for item in items:
-        cursor.execute("""
-            INSERT INTO tbl_service_jc_item (service_jc_id, item_id, product_id, item_name, product_name, item_quantity, product_quantity)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (jc_id, item['item_id'] if item['item_type'] == 'item' else None,
-              item['item_id'] if item['item_type'] == 'product' else None,
-              item['item_name'], item['item_name'], item['quantity'], item['quantity']))
-    
-    cursor.execute("UPDATE tbl_quotation SET status = 'converted', converted_jc_id = %s WHERE quote_id = %s",
-                  (jc_id, quote_id))
-    
-    conn.commit()
-    log_audit('CONVERT', 'tbl_quotation', quote_id, None, {'converted_jc_id': jc_id})
-    cursor.close()
-    conn.close()
-    
-    return redirect(url_for('view_job_card', jc_id=jc_id))
-
-@app.route('/quotations/update-status/<int:quote_id>', methods=['POST'])
-def update_quotation_status(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    conn = get_db()
-    cursor = conn.cursor()
-    new_status = request.form.get('status')
-    cursor.execute("UPDATE tbl_quotation SET status = %s WHERE quote_id = %s", (new_status, quote_id))
-    conn.commit()
-    log_audit('UPDATE', 'tbl_quotation', quote_id, None, {'status': new_status})
-    cursor.close()
-    conn.close()
-    return redirect(url_for('view_quotation', quote_id=quote_id))
-
-
 
 
 import os
@@ -2656,8 +2402,325 @@ def pdf_stock_report():
     except Exception as e:
         return f"PDF generation error: {str(e)}", 500
 
+
+@app.route('/pdf/quotation/<int:quote_id>')
+def pdf_quotation(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
+    quote = cursor.fetchone()
+    if not quote:
+        return "Quotation not found", 404
+    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_quotation.html', 
+                                   quote=quote, 
+                                   items=items,
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name=f'quotation_{quote["quote_number"]}.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
+
 # For Render.com compatibility
 port = int(os.environ.get('PORT', 5000))
+
+# ============ QUOTATIONS MODULE ============
+
+@app.route('/quotations')
+def quotations():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_quotation ORDER BY quote_id DESC")
+    quotations = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return render_template('quotations.html', username=session['username'], role=session['user'],
+                         quotations=quotations, active_page='quotations')
+
+@app.route('/quotations/create', methods=['GET'])
+def create_quotation_form():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT customer_id, customer_name, email, phone FROM tbl_customer")
+    customers = cursor.fetchall()
+    cursor.execute("SELECT item_id, item_name, quantity, purchase_price FROM tbl_item")
+    items = cursor.fetchall()
+    cursor.execute("SELECT product_id, product_name, quantity, purchase_price FROM tbl_product")
+    products = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return render_template('create_quotation.html', username=session['username'], role=session['user'],
+                         customers=customers, items=items, products=products, now=date.today(),
+                         active_page='quotations')
+
+@app.route('/quotations/create', methods=['POST'])
+def create_quotation_post():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    quote_number = f"QT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    cursor.execute("""
+        INSERT INTO tbl_quotation (quote_number, customer_id, customer_name, customer_email, customer_phone,
+        quote_date, expiry_date, subtotal, tax_rate, tax_amount, discount_amount, total_amount, 
+        notes, terms_conditions, status, created_by)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """, (quote_number, request.form.get('customer_id') or None, request.form.get('customer_name'),
+          request.form.get('customer_email'), request.form.get('customer_phone'), 
+          request.form.get('quote_date'), request.form.get('expiry_date') or None,
+          request.form.get('subtotal', 0), request.form.get('tax_rate', 0), 
+          request.form.get('tax_amount', 0), request.form.get('discount_amount', 0),
+          request.form.get('total_amount', 0), request.form.get('notes'),
+          request.form.get('terms_conditions'), 'draft', session['username']))
+    
+    quote_id = cursor.lastrowid
+    
+    item_ids = request.form.getlist('item_id')
+    item_quantities = request.form.getlist('item_quantity')
+    item_prices = request.form.getlist('item_price')
+    
+    for i in range(len(item_ids)):
+        if item_ids[i] and item_quantities[i] and int(item_quantities[i]) > 0:
+            total = float(item_quantities[i]) * float(item_prices[i])
+            cursor.execute("""
+                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
+                VALUES (%s, 'item', %s, %s, %s, %s, %s)
+            """, (quote_id, item_ids[i], '', item_quantities[i], item_prices[i], total))
+    
+    product_ids = request.form.getlist('product_id')
+    product_quantities = request.form.getlist('product_quantity')
+    product_prices = request.form.getlist('product_price')
+    
+    for i in range(len(product_ids)):
+        if product_ids[i] and product_quantities[i] and int(product_quantities[i]) > 0:
+            total = float(product_quantities[i]) * float(product_prices[i])
+            cursor.execute("""
+                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
+                VALUES (%s, 'product', %s, %s, %s, %s, %s)
+            """, (quote_id, product_ids[i], '', product_quantities[i], product_prices[i], total))
+    
+    conn.commit()
+    log_audit('CREATE', 'tbl_quotation', quote_id, None, {'quote_number': quote_number})
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('quotations'))
+
+@app.route('/quotations/view/<int:quote_id>')
+def view_quotation(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
+    quote = cursor.fetchone()
+    if not quote:
+        return "Quotation not found", 404
+    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return render_template('view_quotation.html', username=session['username'], role=session['user'],
+                         quote=quote, items=items, active_page='quotations')
+
+@app.route('/quotations/edit/<int:quote_id>', methods=['GET'])
+def edit_quotation_form(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
+    quote = cursor.fetchone()
+    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    items = cursor.fetchall()
+    cursor.execute("SELECT customer_id, customer_name, email, phone FROM tbl_customer")
+    customers = cursor.fetchall()
+    cursor.execute("SELECT item_id, item_name, quantity, purchase_price FROM tbl_item")
+    all_items = cursor.fetchall()
+    cursor.execute("SELECT product_id, product_name, quantity, purchase_price FROM tbl_product")
+    all_products = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return render_template('edit_quotation.html', username=session['username'], role=session['user'],
+                         quote=quote, items=items, customers=customers, all_items=all_items,
+                         all_products=all_products, active_page='quotations')
+
+@app.route('/quotations/edit/<int:quote_id>', methods=['POST'])
+def edit_quotation_post(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        UPDATE tbl_quotation SET customer_id = %s, customer_name = %s, customer_email = %s, customer_phone = %s,
+        quote_date = %s, expiry_date = %s, subtotal = %s, tax_rate = %s, tax_amount = %s,
+        discount_amount = %s, total_amount = %s, notes = %s, terms_conditions = %s, status = %s
+        WHERE quote_id = %s
+    """, (request.form.get('customer_id') or None, request.form.get('customer_name'),
+          request.form.get('customer_email'), request.form.get('customer_phone'),
+          request.form.get('quote_date'), request.form.get('expiry_date') or None,
+          request.form.get('subtotal', 0), request.form.get('tax_rate', 0), 
+          request.form.get('tax_amount', 0), request.form.get('discount_amount', 0),
+          request.form.get('total_amount', 0), request.form.get('notes'),
+          request.form.get('terms_conditions'), request.form.get('status'), quote_id))
+    
+    cursor.execute("DELETE FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    
+    item_ids = request.form.getlist('item_id')
+    item_quantities = request.form.getlist('item_quantity')
+    item_prices = request.form.getlist('item_price')
+    
+    for i in range(len(item_ids)):
+        if item_ids[i] and item_quantities[i] and int(item_quantities[i]) > 0:
+            total = float(item_quantities[i]) * float(item_prices[i])
+            cursor.execute("""
+                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
+                VALUES (%s, 'item', %s, %s, %s, %s, %s)
+            """, (quote_id, item_ids[i], '', item_quantities[i], item_prices[i], total))
+    
+    product_ids = request.form.getlist('product_id')
+    product_quantities = request.form.getlist('product_quantity')
+    product_prices = request.form.getlist('product_price')
+    
+    for i in range(len(product_ids)):
+        if product_ids[i] and product_quantities[i] and int(product_quantities[i]) > 0:
+            total = float(product_quantities[i]) * float(product_prices[i])
+            cursor.execute("""
+                INSERT INTO tbl_quotation_item (quote_id, item_type, item_id, item_name, quantity, unit_price, total_price)
+                VALUES (%s, 'product', %s, %s, %s, %s, %s)
+            """, (quote_id, product_ids[i], '', product_quantities[i], product_prices[i], total))
+    
+    conn.commit()
+    log_audit('UPDATE', 'tbl_quotation', quote_id, None, {'status': request.form.get('status')})
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('quotations'))
+
+@app.route('/quotations/delete/<int:quote_id>')
+def delete_quotation(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    cursor.execute("DELETE FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
+    conn.commit()
+    log_audit('DELETE', 'tbl_quotation', quote_id, None, None)
+    cursor.close()
+    conn.close()
+    return redirect(url_for('quotations'))
+
+@app.route('/quotations/convert/<int:quote_id>')
+def convert_quote_to_jc(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
+    quote = cursor.fetchone()
+    
+    if not quote:
+        return "Quotation not found", 404
+    
+    cursor.execute("""
+        INSERT INTO tbl_service_jc (jc_type, customer_name, customer_id, amount, work_statement, created_by)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, ('Service', quote['customer_name'], quote['customer_id'], quote['total_amount'], 
+          f"Converted from Quotation #{quote['quote_number']}", session['username']))
+    
+    jc_id = cursor.lastrowid
+    
+    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    items = cursor.fetchall()
+    
+    for item in items:
+        cursor.execute("""
+            INSERT INTO tbl_service_jc_item (service_jc_id, item_id, product_id, item_name, product_name, item_quantity, product_quantity)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (jc_id, 
+              item['item_id'] if item['item_type'] == 'item' else None,
+              item['item_id'] if item['item_type'] == 'product' else None,
+              item['item_name'], item['item_name'], 
+              item['quantity'], item['quantity']))
+    
+    cursor.execute("UPDATE tbl_quotation SET status = 'converted', converted_jc_id = %s WHERE quote_id = %s",
+                  (jc_id, quote_id))
+    
+    conn.commit()
+    log_audit('CONVERT', 'tbl_quotation', quote_id, None, {'converted_jc_id': jc_id})
+    cursor.close()
+    conn.close()
+    
+    return redirect(url_for('view_job_card', jc_id=jc_id))
+
+@app.route('/quotations/update-status/<int:quote_id>', methods=['POST'])
+def update_quotation_status(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    cursor = conn.cursor()
+    new_status = request.form.get('status')
+    cursor.execute("UPDATE tbl_quotation SET status = %s WHERE quote_id = %s", (new_status, quote_id))
+    conn.commit()
+    log_audit('UPDATE', 'tbl_quotation', quote_id, None, {'status': new_status})
+    cursor.close()
+    conn.close()
+    return redirect(url_for('view_quotation', quote_id=quote_id))
+
+@app.route('/pdf/quotation/<int:quote_id>')
+def pdf_quotation(quote_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
+    quote = cursor.fetchone()
+    if not quote:
+        return "Quotation not found", 404
+    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
+    items = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    rendered_html = render_template('pdf_quotation.html', 
+                                   quote=quote, 
+                                   items=items,
+                                   date=date.today())
+    
+    try:
+        pdf_content = generate_pdf(rendered_html)
+        return send_file(
+            BytesIO(pdf_content),
+            as_attachment=True,
+            download_name=f'quotation_{quote["quote_number"]}.pdf',
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"PDF generation error: {str(e)}", 500
 
 
 if __name__ == '__main__':
