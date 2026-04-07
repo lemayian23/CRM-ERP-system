@@ -13,11 +13,15 @@
     </a>
 </div>
 
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
 <div class="card">
     <div class="card-body">
-        <form method="POST" action="/job-cards/create" id="jobCardForm">
+        <form method="POST" action="/job-cards/create">
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label">JC Type <span class="text-danger">*</span></label>
                     <select name="jc_type" class="form-control" required>
                         <option value="Service">Service</option>
@@ -26,57 +30,7 @@
                         <option value="Projects">Projects</option>
                     </select>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Customer Type <span class="text-danger">*</span></label>
-                    <select name="customer_type" class="form-control" required>
-                        <option value="Individual">Individual</option>
-                        <option value="Company">Company</option>
-                        <option value="Reseller">Reseller</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-8 mb-3">
-                    <label class="form-label">Customer Name <span class="text-danger">*</span></label>
-                    <div class="input-group">
-                        <input type="text" name="customer_name" id="customer_name" class="form-control" required>
-                        <button class="btn btn-outline-secondary" type="button" id="searchCustomerBtn" title="Search Customers">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
-                </div>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Customer ID</label>
-                    <input type="number" name="customer_id" id="customer_id" class="form-control" placeholder="Auto-filled">
-                </div>
-            </div>
-            
-            <!-- Customer Quick Select Dropdown (hidden until search) -->
-            <div class="row mb-3" id="customerSearchResults" style="display: none;">
-                <div class="col-md-12">
-                    <div class="alert alert-info">
-                        <strong>Select existing customer:</strong>
-                        <select id="existingCustomerSelect" class="form-control mt-2">
-                            <option value="">-- Select Customer --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">JC Create Date <span class="text-danger">*</span></label>
-                    <input type="date" name="jc_create_date" class="form-control" value="{{ now }}" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Amount (KES) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" name="amount" class="form-control" required>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6 mb-3">
                     <label class="form-label">Priority</label>
                     <select name="priority" class="form-control">
                         <option value="Normal">Normal</option>
@@ -85,36 +39,53 @@
                         <option value="Low">Low</option>
                     </select>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label class="form-label">Estimated Hours</label>
                     <input type="number" step="0.5" name="estimated_hours" class="form-control" placeholder="Optional">
                 </div>
             </div>
             
-            <div class="mb-3">
-                <label class="form-label">Work Statement</label>
-                <textarea name="work_statement" class="form-control" rows="4" placeholder="Describe the work to be done..."></textarea>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Customer Type <span class="text-danger">*</span></label>
+                    <select name="customer_type" class="form-control" required>
+                        <option value="Individual">Individual</option>
+                        <option value="Company">Company</option>
+                        <option value="Reseller">Reseller</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Customer Name <span class="text-danger">*</span></label>
+                    <input type="text" name="customer_name" class="form-control" required>
+                </div>
             </div>
             
             <div class="row">
-                <div class="col-md-12 mb-3">
-                    <label class="form-label">Special Instructions</label>
-                    <textarea name="special_instructions" class="form-control" rows="2" placeholder="Any special notes for the technician..."></textarea>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Customer ID</label>
+                    <input type="number" name="customer_id" class="form-control" placeholder="Optional">
                 </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">JC Create Date <span class="text-danger">*</span></label>
+                    <input type="date" name="jc_create_date" class="form-control" value="{{ now }}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Amount (KES) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" name="amount" class="form-control" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Work Statement</label>
+                <textarea name="work_statement" class="form-control" rows="3" placeholder="Describe the work to be done..."></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Special Instructions</label>
+                <textarea name="special_instructions" class="form-control" rows="2" placeholder="Any special notes for the technician..."></textarea>
             </div>
             
             <hr>
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="send_notification" id="sendNotification" value="1">
-                        <label class="form-check-label" for="sendNotification">
-                            Send notification to assigned technician (when assigned)
-                        </label>
-                    </div>
-                </div>
-            </div>
-            
             <div class="text-end">
                 <button type="reset" class="btn btn-secondary">Reset</button>
                 <button type="submit" class="btn btn-primary">
@@ -124,80 +95,4 @@
         </form>
     </div>
 </div>
-
-{% block extra_js %}
-<script>
-    // Auto-populate today's date if not set
-    document.addEventListener('DOMContentLoaded', function() {
-        const dateInput = document.querySelector('input[name="jc_create_date"]');
-        if (!dateInput.value) {
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.value = today;
-        }
-    });
-    
-    // Search customer functionality
-    $('#searchCustomerBtn').click(function() {
-        const searchTerm = $('#customer_name').val().trim();
-        if (searchTerm.length < 2) {
-            alert('Please enter at least 2 characters to search');
-            return;
-        }
-        
-        $.ajax({
-            url: '/api/search-customers',
-            method: 'GET',
-            data: { q: searchTerm },
-            success: function(response) {
-                if (response.customers && response.customers.length > 0) {
-                    const select = $('#existingCustomerSelect');
-                    select.empty();
-                    select.append('<option value="">-- Select Customer --</option>');
-                    
-                    response.customers.forEach(function(customer) {
-                        select.append(`<option value="${customer.customer_id}" data-name="${customer.customer_name}" data-type="${customer.customer_type}">${customer.customer_name} (${customer.customer_type})</option>`);
-                    });
-                    
-                    $('#customerSearchResults').show();
-                } else {
-                    alert('No customers found. You can create a new customer.');
-                }
-            },
-            error: function() {
-                alert('Error searching customers');
-            }
-        });
-    });
-    
-    // Auto-fill customer details when selected
-    $('#existingCustomerSelect').change(function() {
-        const selected = $(this).find('option:selected');
-        if (selected.val()) {
-            $('#customer_name').val(selected.data('name'));
-            $('#customer_id').val(selected.val());
-            $('#customer_type').val(selected.data('type'));
-            $('#customerSearchResults').hide();
-        }
-    });
-    
-    // Form validation before submit
-    $('#jobCardForm').on('submit', function(e) {
-        const amount = parseFloat($('input[name="amount"]').val());
-        if (isNaN(amount) || amount <= 0) {
-            e.preventDefault();
-            alert('Please enter a valid amount greater than 0');
-            return false;
-        }
-        
-        const customerName = $('#customer_name').val().trim();
-        if (!customerName) {
-            e.preventDefault();
-            alert('Please enter a customer name');
-            return false;
-        }
-        
-        return true;
-    });
-</script>
-{% endblock %}
 {% endblock %}
