@@ -90,7 +90,15 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm" id="itemsTable">
-                            <thead><tr><th>Item</th><th width="100">Qty</th><th width="120">Unit Price</th><th width="120">Total</th><th width="50"></th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th width="100">Qty</th>
+                                    <th width="120">Unit Price</th>
+                                    <th width="120">Total</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
                             <tbody id="itemsBody">
                                 {% for item in items if item.item_type == 'item' %}
                                 <tr id="itemRow_{{ loop.index0 }}">
@@ -104,10 +112,16 @@
                                             {% endfor %}
                                         </select>
                                     </td>
-                                    <td><input type="number" name="item_quantity" class="form-control form-control-sm item-qty" data-idx="{{ loop.index0 }}" value="{{ item.quantity }}"></td>
-                                    <td><input type="number" step="0.01" name="item_price" class="form-control form-control-sm item-price" data-idx="{{ loop.index0 }}" value="{{ item.unit_price }}"></td>
+                                    <td>
+                                        <input type="number" name="item_quantity" class="form-control form-control-sm item-qty" data-idx="{{ loop.index0 }}" value="{{ item.quantity }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.01" name="item_price" class="form-control form-control-sm item-price" data-idx="{{ loop.index0 }}" value="{{ item.unit_price }}">
+                                    </td>
                                     <td class="item-total" id="itemTotal_{{ loop.index0 }}">{{ "%.2f"|format(item.total_price) }}</td>
-                                    <td><button type="button" class="btn btn-sm btn-danger remove-item" data-idx="{{ loop.index0 }}"><i class="fas fa-trash"></i></button></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger remove-item" data-idx="{{ loop.index0 }}"><i class="fas fa-trash"></i></button>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -124,7 +138,15 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm" id="productsTable">
-                            <thead><tr><th>Product</th><th width="100">Qty</th><th width="120">Unit Price</th><th width="120">Total</th><th width="50"></th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th width="100">Qty</th>
+                                    <th width="120">Unit Price</th>
+                                    <th width="120">Total</th>
+                                    <th width="50"></th>
+                                </tr>
+                            </thead>
                             <tbody id="productsBody">
                                 {% for item in items if item.item_type == 'product' %}
                                 <tr id="productRow_{{ loop.index0 }}">
@@ -138,10 +160,16 @@
                                             {% endfor %}
                                         </select>
                                     </td>
-                                    <td><input type="number" name="product_quantity" class="form-control form-control-sm product-qty" data-idx="{{ loop.index0 }}" value="{{ item.quantity }}"></td>
-                                    <td><input type="number" step="0.01" name="product_price" class="form-control form-control-sm product-price" data-idx="{{ loop.index0 }}" value="{{ item.unit_price }}"></td>
+                                    <td>
+                                        <input type="number" name="product_quantity" class="form-control form-control-sm product-qty" data-idx="{{ loop.index0 }}" value="{{ item.quantity }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.01" name="product_price" class="form-control form-control-sm product-price" data-idx="{{ loop.index0 }}" value="{{ item.unit_price }}">
+                                    </td>
                                     <td class="product-total" id="productTotal_{{ loop.index0 }}">{{ "%.2f"|format(item.total_price) }}</td>
-                                    <td><button type="button" class="btn btn-sm btn-danger remove-product" data-idx="{{ loop.index0 }}"><i class="fas fa-trash"></i></button></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger remove-product" data-idx="{{ loop.index0 }}"><i class="fas fa-trash"></i></button>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -157,11 +185,11 @@
                     <div class="row">
                         <div class="col-md-6 offset-md-6">
                             <table class="table table-sm">
-                                <tr><td>Subtotal:</td><td class="text-end"><span id="subtotal">{{ "%.2f"|format(quote.subtotal or 0) }}</span><input type="hidden" name="subtotal" id="subtotalInput" value="{{ quote.subtotal or 0 }}"></td></tr>
-                                <tr><td>Tax Rate (%):</td><td><input type="number" step="0.01" name="tax_rate" id="taxRate" class="form-control form-control-sm" style="width:100px" value="{{ quote.tax_rate or 0 }}"></td></tr>
-                                <tr><td>Tax Amount:</td><td class="text-end"><span id="taxAmount">{{ "%.2f"|format(quote.tax_amount or 0) }}</span><input type="hidden" name="tax_amount" id="taxAmountInput" value="{{ quote.tax_amount or 0 }}"></td></tr>
-                                <tr><td>Discount:</td><td><input type="number" step="0.01" name="discount_amount" id="discountAmount" class="form-control form-control-sm" style="width:100px" value="{{ quote.discount_amount or 0 }}"></td></tr>
-                                <tr class="table-active"><td><strong>Total:</strong></td><td class="text-end"><strong><span id="grandTotal">{{ "%.2f"|format(quote.total_amount or 0) }}</span></strong><input type="hidden" name="total_amount" id="grandTotalInput" value="{{ quote.total_amount or 0 }}"></td></tr>
+                                <tr><td colspan="3" class="text-end"><strong>Subtotal:</strong></td><td class="text-end"><span id="subtotal">{{ "%.2f"|format(quote.subtotal or 0) }}</span><input type="hidden" name="subtotal" id="subtotalInput" value="{{ quote.subtotal or 0 }}"></td></tr>
+                                <tr><td colspan="3" class="text-end"><strong>Tax Rate (%):</strong></td><td class="text-end"><input type="number" step="0.01" name="tax_rate" id="taxRate" class="form-control form-control-sm" style="width:100px" value="{{ quote.tax_rate or 0 }}"></td></tr>
+                                <tr><td colspan="3" class="text-end"><strong>Tax Amount:</strong></td><td class="text-end"><span id="taxAmount">{{ "%.2f"|format(quote.tax_amount or 0) }}</span><input type="hidden" name="tax_amount" id="taxAmountInput" value="{{ quote.tax_amount or 0 }}"></td></tr>
+                                <tr><td colspan="3" class="text-end"><strong>Discount:</strong></td><td class="text-end"><input type="number" step="0.01" name="discount_amount" id="discountAmount" class="form-control form-control-sm" style="width:100px" value="{{ quote.discount_amount or 0 }}"></td></tr>
+                                <tr class="table-active"><td colspan="3" class="text-end"><strong>Total:</strong></td><td class="text-end"><strong><span id="grandTotal">{{ "%.2f"|format(quote.total_amount or 0) }}</span></strong><input type="hidden" name="total_amount" id="grandTotalInput" value="{{ quote.total_amount or 0 }}"></td></tr>
                             </table>
                         </div>
                     </div>
@@ -177,86 +205,156 @@
                 </div>
             </div>
 
-            <div class="text-end mt-3"><button type="submit" class="btn btn-primary">Update Quotation</button></div>
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-primary">Update Quotation</button>
+            </div>
         </form>
     </div>
 </div>
 
 <script>
+// Initialize counters from existing items
 let itemRowCount = {{ items|selectattr('item_type', 'equalto', 'item')|list|length }};
 let productRowCount = {{ items|selectattr('item_type', 'equalto', 'product')|list|length }};
 
-$('#customerSelect').change(function() {
+// Customer select handler
+$('#customerSelect').on('change', function() {
     var selected = $(this).find('option:selected');
     $('#customerName').val(selected.data('name') || '');
     $('#customerEmail').val(selected.data('email') || '');
     $('#customerPhone').val(selected.data('phone') || '');
 });
 
-$('#addItemBtn').click(function() {
+// Add Item button
+$('#addItemBtn').on('click', function() {
     let idx = itemRowCount;
-    let newRow = `<tr id="itemRow_${idx}"><td><select name="item_id" class="form-control form-control-sm item-select" data-idx="${idx}"><option value="">-- Select Item --</option>{% for i in all_items %}<option value="{{ i.item_id }}" data-price="{{ i.purchase_price or 0 }}">{{ i.item_name }}</option>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>`;
+    let newRow = `
+        <tr id="itemRow_${idx}">
+            <td>
+                <select name="item_id" class="form-control form-control-sm item-select" data-idx="${idx}">
+                    <option value="">-- Select Item --</option>
+                    {% for i in all_items %}
+                    <option value="{{ i.item_id }}" data-price="{{ i.purchase_price or 0 }}">{{ i.item_name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="number" name="item_quantity" class="form-control form-control-sm item-qty" data-idx="${idx}" value="1" min="1"></td>
+            <td><input type="number" step="0.01" name="item_price" class="form-control form-control-sm item-price" data-idx="${idx}" readonly></td>
+            <td class="item-total" id="itemTotal_${idx}">0.00</td>
+            <td><button type="button" class="btn btn-sm btn-danger remove-item" data-idx="${idx}"><i class="fas fa-trash"></i></button></td>
+        </tr>
+    `;
     $('#itemsBody').append(newRow);
     bindItemEvents(idx);
     itemRowCount++;
 });
 
-$('#addProductBtn').click(function() {
+// Add Product button
+$('#addProductBtn').on('click', function() {
     let idx = productRowCount;
-    let newRow = `<tr id="productRow_${idx}"><td><select name="product_id" class="form-control form-control-sm product-select" data-idx="${idx}"><option value="">-- Select Product --</option>{% for p in all_products %}<option value="{{ p.product_id }}" data-price="{{ p.purchase_price or 0 }}">{{ p.product_name }}</option>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>{% endfor %}</select>`;
+    let newRow = `
+        <tr id="productRow_${idx}">
+            <td>
+                <select name="product_id" class="form-control form-control-sm product-select" data-idx="${idx}">
+                    <option value="">-- Select Product --</option>
+                    {% for p in all_products %}
+                    <option value="{{ p.product_id }}" data-price="{{ p.purchase_price or 0 }}">{{ p.product_name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td><input type="number" name="product_quantity" class="form-control form-control-sm product-qty" data-idx="${idx}" value="1" min="1"></td>
+            <td><input type="number" step="0.01" name="product_price" class="form-control form-control-sm product-price" data-idx="${idx}" readonly></td>
+            <td class="product-total" id="productTotal_${idx}">0.00</td>
+            <td><button type="button" class="btn btn-sm btn-danger remove-product" data-idx="${idx}"><i class="fas fa-trash"></i></button></td>
+        </tr>
+    `;
     $('#productsBody').append(newRow);
     bindProductEvents(idx);
     productRowCount++;
 });
 
+// Bind item events
 function bindItemEvents(idx) {
-    $(`.item-select[data-idx="${idx}"]`).change(function() { let price = $(this).find('option:selected').data('price'); $(`.item-price[data-idx="${idx}"]`).val(price || 0); calculateItemTotal(idx); });
-    $(`.item-qty[data-idx="${idx}"]`).on('keyup change', function() { calculateItemTotal(idx); });
-    $(`.remove-item[data-idx="${idx}"]`).click(function() { $(`#itemRow_${idx}`).remove(); calculateAll(); });
+    $(`.item-select[data-idx="${idx}"]`).on('change', function() {
+        let price = $(this).find('option:selected').data('price');
+        $(`.item-price[data-idx="${idx}"]`).val(price || 0);
+        calculateItemTotal(idx);
+    });
+    $(`.item-qty[data-idx="${idx}"]`).on('keyup change', function() {
+        calculateItemTotal(idx);
+    });
+    $(`.remove-item[data-idx="${idx}"]`).on('click', function() {
+        $(`#itemRow_${idx}`).remove();
+        calculateAll();
+    });
     calculateItemTotal(idx);
 }
 
+// Bind product events
 function bindProductEvents(idx) {
-    $(`.product-select[data-idx="${idx}"]`).change(function() { let price = $(this).find('option:selected').data('price'); $(`.product-price[data-idx="${idx}"]`).val(price || 0); calculateProductTotal(idx); });
-    $(`.product-qty[data-idx="${idx}"]`).on('keyup change', function() { calculateProductTotal(idx); });
-    $(`.remove-product[data-idx="${idx}"]`).click(function() { $(`#productRow_${idx}`).remove(); calculateAll(); });
+    $(`.product-select[data-idx="${idx}"]`).on('change', function() {
+        let price = $(this).find('option:selected').data('price');
+        $(`.product-price[data-idx="${idx}"]`).val(price || 0);
+        calculateProductTotal(idx);
+    });
+    $(`.product-qty[data-idx="${idx}"]`).on('keyup change', function() {
+        calculateProductTotal(idx);
+    });
+    $(`.remove-product[data-idx="${idx}"]`).on('click', function() {
+        $(`#productRow_${idx}`).remove();
+        calculateAll();
+    });
     calculateProductTotal(idx);
 }
 
+// Calculate item total
 function calculateItemTotal(idx) {
     let qty = parseFloat($(`.item-qty[data-idx="${idx}"]`).val()) || 0;
     let price = parseFloat($(`.item-price[data-idx="${idx}"]`).val()) || 0;
-    $(`#itemTotal_${idx}`).text((qty * price).toFixed(2));
+    let total = qty * price;
+    $(`#itemTotal_${idx}`).text(total.toFixed(2));
     calculateAll();
 }
 
+// Calculate product total
 function calculateProductTotal(idx) {
     let qty = parseFloat($(`.product-qty[data-idx="${idx}"]`).val()) || 0;
     let price = parseFloat($(`.product-price[data-idx="${idx}"]`).val()) || 0;
-    $(`#productTotal_${idx}`).text((qty * price).toFixed(2));
+    let total = qty * price;
+    $(`#productTotal_${idx}`).text(total.toFixed(2));
     calculateAll();
 }
 
+// Calculate all totals
 function calculateAll() {
     let subtotal = 0;
     $('.item-total').each(function() { subtotal += parseFloat($(this).text()) || 0; });
     $('.product-total').each(function() { subtotal += parseFloat($(this).text()) || 0; });
-    $('#subtotal').text(subtotal.toFixed(2)); $('#subtotalInput').val(subtotal.toFixed(2));
+    $('#subtotal').text(subtotal.toFixed(2));
+    $('#subtotalInput').val(subtotal.toFixed(2));
+    
     let taxRate = parseFloat($('#taxRate').val()) || 0;
     let taxAmount = subtotal * taxRate / 100;
-    $('#taxAmount').text(taxAmount.toFixed(2)); $('#taxAmountInput').val(taxAmount.toFixed(2));
+    $('#taxAmount').text(taxAmount.toFixed(2));
+    $('#taxAmountInput').val(taxAmount.toFixed(2));
+    
     let discount = parseFloat($('#discountAmount').val()) || 0;
     let grandTotal = subtotal + taxAmount - discount;
-    $('#grandTotal').text(grandTotal.toFixed(2)); $('#grandTotalInput').val(grandTotal.toFixed(2));
+    $('#grandTotal').text(grandTotal.toFixed(2));
+    $('#grandTotalInput').val(grandTotal.toFixed(2));
 }
 
-$('#taxRate, #discountAmount').on('keyup change', calculateAll);
-
+// Bind existing items
 {% for item in items if item.item_type == 'item' %}
-    bindItemEvents({{ loop.index0 }});
+bindItemEvents({{ loop.index0 }});
 {% endfor %}
+
+// Bind existing products
 {% for item in items if item.item_type == 'product' %}
-    bindProductEvents({{ loop.index0 }});
+bindProductEvents({{ loop.index0 }});
 {% endfor %}
+
+// Tax and discount handlers
+$('#taxRate, #discountAmount').on('keyup change', calculateAll);
 </script>
 {% endblock %}
