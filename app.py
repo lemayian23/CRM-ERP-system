@@ -185,7 +185,10 @@ def job_cards():
 def create_job_card_form():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return render_template('create_job_card.html', username=session['username'], role=session['user'],
+    return render_template('create_job_card.html', 
+                         username=session['username'], 
+                         role=session['user'],
+                         now=date.today(),
                          active_page='job_cards')
 
 @app.route('/job-cards/create', methods=['POST'])
