@@ -2690,37 +2690,6 @@ def update_quotation_status(quote_id):
     conn.close()
     return redirect(url_for('view_quotation', quote_id=quote_id))
 
-@app.route('/pdf/quotation/<int:quote_id>')
-def pdf_quotation(quote_id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM tbl_quotation WHERE quote_id = %s", (quote_id,))
-    quote = cursor.fetchone()
-    if not quote:
-        return "Quotation not found", 404
-    cursor.execute("SELECT * FROM tbl_quotation_item WHERE quote_id = %s", (quote_id,))
-    items = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    rendered_html = render_template('pdf_quotation.html', 
-                                   quote=quote, 
-                                   items=items,
-                                   date=date.today())
-    
-    try:
-        pdf_content = generate_pdf(rendered_html)
-        return send_file(
-            BytesIO(pdf_content),
-            as_attachment=True,
-            download_name=f'quotation_{quote["quote_number"]}.pdf',
-            mimetype='application/pdf'
-        )
-    except Exception as e:
-        return f"PDF generation error: {str(e)}", 500
 
 
 if __name__ == '__main__':
