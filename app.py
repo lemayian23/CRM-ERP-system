@@ -180,7 +180,6 @@ def job_cards():
     conn.close()
     return render_template('job_cards.html', username=session['username'], role=session['user'],
                          job_cards=job_cards, active_page='job_cards')
-
 @app.route('/job-cards/create', methods=['GET'])
 def create_job_card_form():
     if 'user_id' not in session:
@@ -188,7 +187,6 @@ def create_job_card_form():
     return render_template('create_job_card.html', 
                          username=session['username'], 
                          role=session['user'],
-                         now=date.today(),
                          active_page='job_cards')
 
 @app.route('/job-cards/create', methods=['POST'])
@@ -199,38 +197,34 @@ def create_job_card_post():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Get form values with proper defaults
-    jc_type = request.form.get('jc_type', 'Service')
-    customer_type = request.form.get('customer_type', 'Individual')
-    customer_name = request.form.get('customer_name', '')
-    customer_id = request.form.get('customer_id') or None
-    jc_create_date = request.form.get('jc_create_date')
-    amount = request.form.get('amount', 0)
-    work_statement = request.form.get('work_statement', '')
-    priority = request.form.get('priority', 'Normal')
-    estimated_hours = request.form.get('estimated_hours') or None
-    special_instructions = request.form.get('special_instructions', '')
-    
-    # Validate required fields
-    if not customer_name:
+    try:
+        cursor.execute("""
+            INSERT INTO tbl_service_jc (jc_type, customer_type, customer_name, customer_id, 
+            jc_create_date, amount, work_statement, priority, estimated_hours, special_instructions)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            request.form.get('jc_type', 'Service'),
+            request.form.get('customer_type', 'Individual'),
+            request.form.get('customer_name', ''),
+            request.form.get('customer_id') or None,
+            request.form.get('jc_create_date'),
+            request.form.get('amount', 0),
+            request.form.get('work_statement', ''),
+            request.form.get('priority', 'Normal'),
+            request.form.get('estimated_hours') or None,
+            request.form.get('special_instructions', '')
+        ))
+        
+        jc_id = cursor.lastrowid
+        conn.commit()
+        log_audit('CREATE', 'tbl_service_jc', jc_id, None, {'customer_name': request.form.get('customer_name'), 'amount': request.form.get('amount')})
+        
+    except Exception as e:
+        conn.rollback()
         cursor.close()
         conn.close()
-        return render_template('create_job_card.html', 
-                             username=session['username'], 
-                             role=session['user'],
-                             error='Customer name is required',
-                             active_page='job_cards')
+        return f"Database error: {str(e)}", 500
     
-    cursor.execute("""
-        INSERT INTO tbl_service_jc (jc_type, customer_type, customer_name, customer_id, 
-        jc_create_date, amount, work_statement, priority, estimated_hours, special_instructions)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (jc_type, customer_type, customer_name, customer_id, jc_create_date, 
-          amount, work_statement, priority, estimated_hours, special_instructions))
-    
-    jc_id = cursor.lastrowid
-    conn.commit()
-    log_audit('CREATE', 'tbl_service_jc', jc_id, None, {'customer_name': customer_name, 'amount': amount})
     cursor.close()
     conn.close()
     

@@ -19,7 +19,7 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="POST" action="/job-cards/create">
+        <form method="POST" action="/job-cards/create" id="jobCardForm">
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">JC Type <span class="text-danger">*</span></label>
@@ -56,22 +56,22 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Customer Name <span class="text-danger">*</span></label>
-                    <input type="text" name="customer_name" class="form-control" required>
+                    <input type="text" name="customer_name" id="customer_name" class="form-control" required>
                 </div>
             </div>
             
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Customer ID</label>
-                    <input type="number" name="customer_id" class="form-control" placeholder="Optional">
+                    <input type="number" name="customer_id" id="customer_id" class="form-control" placeholder="Optional">
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">JC Create Date <span class="text-danger">*</span></label>
-                    <input type="date" name="jc_create_date" class="form-control" value="{{ now }}" required>
+                    <input type="date" name="jc_create_date" id="jc_create_date" class="form-control" required>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Amount (KES) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" name="amount" class="form-control" required>
+                    <input type="number" step="0.01" name="amount" id="amount" class="form-control" required>
                 </div>
             </div>
             
@@ -95,4 +95,34 @@
         </form>
     </div>
 </div>
+
+<script>
+    // Auto-populate today's date if not set
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('jc_create_date');
+        if (!dateInput.value) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+        }
+    });
+    
+    // Form validation
+    document.getElementById('jobCardForm').addEventListener('submit', function(e) {
+        const amount = parseFloat(document.getElementById('amount').value);
+        if (isNaN(amount) || amount <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid amount greater than 0');
+            return false;
+        }
+        
+        const customerName = document.getElementById('customer_name').value.trim();
+        if (!customerName) {
+            e.preventDefault();
+            alert('Please enter a customer name');
+            return false;
+        }
+        
+        return true;
+    });
+</script>
 {% endblock %}
