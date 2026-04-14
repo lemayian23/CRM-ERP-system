@@ -290,8 +290,11 @@
                     {% block content %}{% endblock %}
                 </div>
                 <footer>
-                    <i class="far fa-copyright me-1"></i> 2024 Aquashine CRM System | All Rights Reserved
+                    <i class="far fa-copyright me-1"></i> <span id="currentYear">2026</span> Aquashine CRM System | All Rights Reserved
                 </footer>
+                <script>
+                    document.getElementById('currentYear').innerText = new Date().getFullYear();
+                </script>
             </div>
         </div>
     </div>
