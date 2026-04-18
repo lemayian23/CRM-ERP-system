@@ -1,37 +1,59 @@
 # Business Management System (CRM/ERP)
 
-A complete web-based business management platform for service-based companies. Manage customers, service jobs, inventory, finances, team performance, and reports from a single dashboard.
+A complete, production‑ready web‑based business management platform for service‑based companies. Manage customers, service jobs, inventory, finances, team performance, quotations, and reports from a single dashboard. **Live in production** at [Aquashine Limited](https://crm-erp-system.onrender.com).
 
-## Features
+## 🚀 Live Demo
+
+🔗 **Production URL:** [https://crm-erp-system.onrender.com](https://crm-erp-system.onrender.com)  
+*Login:* `admin` / `admin123` (demo credentials – please change after first login)
+
+---
+
+## ✨ Features
 
 ### Core Modules
-- **Dashboard** - Real-time business metrics and KPIs
-- **Job/Service Management** - Create, assign, track, and close service jobs
-- **Customer Management** - Centralized customer database with history tracking
-- **Inventory Control** - Items and products management with stock tracking
-- **Financial Tracking** - Payment recording, revenue tracking, pending balances
-- **Team Management** - Staff/technician database and performance metrics
+- **Dashboard** – Real‑time business metrics and KPIs (unassigned jobs, pending payments, stock valuation, etc.)
+- **Job / Service Management** – Full lifecycle: create, assign to technician, track status, close, and record payments
+- **Customer Management** – Centralised database with type classification (Individual, Company, Reseller) and service history
+- **Inventory Control** – Manage items and products, track stock levels, automatic deduction on job completion
+- **Financial Tracking** – Record payments (Cash, Mpesa, Cheque, Bank Transfer), track revenue and pending balances
+- **Team Management** – Technician database, assignment tracking, performance metrics
 
 ### Advanced Features
-- **Project Management** - Track projects with status and budgets
-- **Service Calls** - Customer request tracking and resolution
-- **AMC Contracts** - Annual maintenance contract management
-- **Quotations** - Generate quotes with profit margin calculation
-- **Reports** - Financial, stock, customer, and team performance reports
-- **Export** - Excel, CSV, and PDF export capabilities
-- **Planner/Scheduler** - Calendar view for events and tasks
-- **Audit Log** - Complete user action tracking
+- **Project Management** – Track projects with status, budgets, and associated job cards
+- **Service Calls** – Log and resolve customer service requests with priority levels
+- **AMC Contracts** – Manage annual maintenance contracts and schedule service visits
+- **Quotations** – Generate professional quotes with margin calculation (cost price, gross profit, margin %), convert to job card on approval
+- **Reports** – Financial, stock, customer, technician, and job card reports with date filters
+- **Export** – Excel (XLSX) and CSV export for job cards, customers, and inventory
+- **PDF Generation** – Download job cards, quotations, invoices, financial and stock reports (via PDFShift API)
+- **Planner / Scheduler** – Calendar view for events, tasks, and pending jobs
+- **Audit Log** – Complete user action tracking (admin only)
+- **Role‑Based Access Control** – Admin, Manager, Accounts, Projects, Sales – each with tailored permissions
 
-### Role-Based Access
-- **Admin** - Full system access
-- **Manager** - Operational management
-- **Accounts** - Financial and payment access
-- **Projects** - Project and job management
-- **Sales** - Customer and quotation access
+### Recent Enhancements
+- **SMS Notifications** – Automated messages (assignment, completion, payment) via Africa’s Talking API
+- **Dynamic Footer** – Current year automatically updates across all pages
+- **Production Cloud Deployment** – Hosted on **Render** with **TiDB Cloud** (MySQL‑compatible database)
 
-## Tech Stack
+---
 
-- **Backend**: Python 3.12, Flask
-- **Database**: MySQL
-- **Frontend**: Bootstrap 5, JavaScript, jQuery
-- **Libraries**: DataTables, FullCalendar, pdfkit, openpyxl
+## 🛠️ Tech Stack
+
+| Category       | Technologies                                                                 |
+|----------------|------------------------------------------------------------------------------|
+| **Backend**    | Python 3.12, Flask, Waitress (production WSGI)                              |
+| **Database**   | MySQL (TiDB Cloud Serverless – fully compatible)                            |
+| **Frontend**   | Bootstrap 5, JavaScript (ES6), jQuery, DataTables, FullCalendar             |
+| **APIs**       | PDFShift (PDF generation), Africa’s Talking (SMS)                           |
+| **Deployment** | Render (web service), GitHub (CI/CD)                                        |
+| **Libraries**  | openpyxl (Excel export), pdfkit, requests, mysql‑connector‑python           |
+
+---
+
+## 📦 Installation (Local Development)
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/lemayian23/CRM-ERP-system.git
+   cd CRM-ERP-system
