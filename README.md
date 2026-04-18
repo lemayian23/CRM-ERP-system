@@ -46,6 +46,10 @@ STEPS TO RUN IN A LOCAL ENVIRONMENT
 2. Create and activate a virtual environment
 3. Install dependencies
 4. Set up environment variables – create a .env file
+5. Initialise the database
+6. Run the application
+
+
 🙏 Acknowledgements
 PDFShift for reliable PDF generation API
 
