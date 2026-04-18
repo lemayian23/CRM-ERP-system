@@ -35,3 +35,22 @@ A complete web-based business management platform for service-based companies. M
 - **Database**: MySQL
 - **Frontend**: Bootstrap 5, JavaScript, jQuery
 - **Libraries**: DataTables, FullCalendar, pdfkit, openpyxl
+
+STEPS TO RUN IN A LOCAL ENVIRONMENT
+
+1. **Clone the repository**
+   ```bash
+   git clone githublink....
+   cd cloned project folder
+
+2. Create and activate a virtual environment
+3. Install dependencies
+4. Set up environment variables – create a .env file
+🙏 Acknowledgements
+PDFShift for reliable PDF generation API
+
+Africa’s Talking for SMS gateway
+
+Render for free cloud hosting
+
+TiDB Cloud for serverless MySQL compatibility
