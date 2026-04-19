@@ -86,13 +86,10 @@
                     {% endfor %}
                 </tbody>
                 <tfoot>
-                    <tr><td colspan="3" class="text-end"><strong>Cost Price:</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.cost_price or 0) }}</td></tr>
                     <tr><td colspan="3" class="text-end"><strong>Subtotal:</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.subtotal or 0) }}</td></tr>
                     <tr><td colspan="3" class="text-end"><strong>Tax ({{ quote.tax_rate or 0 }}%):</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.tax_amount or 0) }}</td></tr>
                     <tr><td colspan="3" class="text-end"><strong>Discount:</strong></td><td class="text-end">{{ "{:,.2f}".format(quote.discount_amount or 0) }}</td></tr>
-                    <tr class="table-primary"><td colspan="3" class="text-end"><strong>Total:</strong></td><td class="text-end"><strong>{{ "{:,.2f}".format(quote.total_amount or 0) }}</strong></td></tr>
-                    <tr class="table-success"><td colspan="3" class="text-end"><strong>Gross Profit:</strong></td><td class="text-end"><strong>{{ "{:,.2f}".format(quote.gross_profit or 0) }}</strong></td></tr>
-                    <tr class="table-info"><td colspan="3" class="text-end"><strong>Margin:</strong></td><td class="text-end"><strong>{{ "{:.2f}".format(quote.margin_percentage or 0) }}%</strong></td></tr>
+                    <tr class="table-active"><td colspan="3" class="text-end"><strong>Total:</strong></td><td class="text-end"><strong>{{ "{:,.2f}".format(quote.total_amount or 0) }}</strong></td></tr>
                 </tfoot>
             </table>
         </div>

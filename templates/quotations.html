@@ -48,20 +48,25 @@
                             {% elif quote.status == 'rejected' %}
                                 <span class="badge bg-danger">Rejected</span>
                             {% elif quote.status == 'converted' %}
-                                <span class="badge bg-primary">Converted to JC</span>
+                                <span class="badge bg-primary">Converted</span>
                             {% endif %}
                         </td>
                         <td>
-                            <a href="/quotations/view/{{ quote.quote_id }}" class="btn btn-sm btn-info">
+                            <a href="/quotations/view/{{ quote.quote_id }}" class="btn btn-sm btn-info" title="View">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="/quotations/edit/{{ quote.quote_id }}" class="btn btn-sm btn-warning">
+                            <a href="/quotations/edit/{{ quote.quote_id }}" class="btn btn-sm btn-warning" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a href="/pdf/quotation/{{ quote.quote_id }}" class="btn btn-sm btn-secondary">
+                            <a href="/pdf/quotation/{{ quote.quote_id }}" class="btn btn-sm btn-secondary" title="PDF">
                                 <i class="fas fa-file-pdf"></i>
                             </a>
-                            <button class="btn btn-sm btn-danger delete-quote" data-id="{{ quote.quote_id }}">
+                            {% if quote.status == 'approved' and quote.converted_jc_id is none %}
+                            <a href="/quotations/convert/{{ quote.quote_id }}" class="btn btn-sm btn-success" title="Convert to Job Card">
+                                <i class="fas fa-exchange-alt"></i>
+                            </a>
+                            {% endif %}
+                            <button class="btn btn-sm btn-danger delete-quote" data-id="{{ quote.quote_id }}" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
@@ -73,7 +78,6 @@
     </div>
 </div>
 
-{% block extra_js %}
 <script>
     $(document).ready(function() {
         $('#quotationsTable').DataTable({
@@ -81,11 +85,10 @@
         });
         
         $('.delete-quote').click(function() {
-            if(confirm('Delete this quotation?')) {
+            if(confirm('Are you sure you want to delete this quotation?')) {
                 window.location.href = '/quotations/delete/' + $(this).data('id');
             }
         });
     });
 </script>
-{% endblock %}
 {% endblock %}
