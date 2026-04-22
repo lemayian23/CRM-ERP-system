@@ -14,7 +14,23 @@ import requests
 from io import BytesIO
 
 from flask import jsonify
+from config.mpesa_client import MpesaClient
 
+# ============ MPESA INTEGRATION FOR STK PUSH ============
+
+mpesa = MpesaClient()
+
+@app.route('/api/mpesa/initiate-payment', methods=['POST'])
+def initiate_payment():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    job_card_id = data.get('phone_number')
+    amount = data.get('amount')
+
+    #Validate input
+    
 
 
 load_dotenv()
